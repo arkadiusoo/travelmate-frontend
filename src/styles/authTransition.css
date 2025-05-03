@@ -1,24 +1,18 @@
-.fade-grow-enter {
+.fade-enter {
   opacity: 0;
-  transform: scale(0.95);
-  max-height: 0;
-  overflow: hidden;
+  transform: scale(0.98);
 }
-.fade-grow-enter-active {
+.fade-enter-active {
   opacity: 1;
   transform: scale(1);
-  max-height: 1000px;
-  transition: opacity 800ms ease, transform 800ms ease, max-height 800ms ease;
+  transition: opacity 300ms ease, transform 300ms ease;
 }
-.fade-grow-exit {
+.fade-exit {
   opacity: 1;
   transform: scale(1);
-  max-height: 1000px;
 }
-.fade-grow-exit-active {
+.fade-exit-active {
   opacity: 0;
-  transform: scale(0.95);
-  max-height: 0;
-  overflow: hidden;
-  transition: opacity 800ms ease, transform 800ms ease, max-height 800ms ease;
+  transform: scale(0.98);
+  transition: opacity 300ms ease, transform 300ms ease;
 }
