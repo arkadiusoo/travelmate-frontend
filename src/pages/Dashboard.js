@@ -78,6 +78,7 @@ function Dashboard({ onLogout }) {
             variant="outline-danger"
             onClick={() => {
               localStorage.removeItem("isLoggedIn");
+              localStorage.removeItem("userEmail");
               window.location.href = "/";
             }}
           >
