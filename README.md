@@ -66,7 +66,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - [React](https://reactjs.org/)
 - [Bootstrap](https://getbootstrap.com/)
 - [React-Bootstrap](https://react-bootstrap.github.io/)
-- [React Icons](https://react-icons.github.io/)
+- [React Icons](https://react-icons.github.io/react-icons/)
 
 ---
 
