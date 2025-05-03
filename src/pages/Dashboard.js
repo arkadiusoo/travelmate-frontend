@@ -1,6 +1,7 @@
 import React from "react";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
 import MainLayout from "../layouts/MainLayout";
+import { handleLogout } from "../utils/logout";
 
 function Dashboard({ onLogout }) {
   const email = localStorage.getItem("userEmail") || "Adam@gmail.com";
@@ -74,14 +75,7 @@ function Dashboard({ onLogout }) {
         </Row>
 
         <div className="text-center mt-5">
-          <Button
-            variant="outline-danger"
-            onClick={() => {
-              localStorage.removeItem("isLoggedIn");
-              localStorage.removeItem("userEmail");
-              window.location.href = "/";
-            }}
-          >
+          <Button variant="outline-danger" onClick={handleLogout}>
             Wyloguj się
           </Button>
         </div>

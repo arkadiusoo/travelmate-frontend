@@ -2,8 +2,11 @@ import React from "react";
 import { Navbar, Nav, Container } from "react-bootstrap";
 import ThemeToggle from "./ThemeToggle";
 import logo from "../assets/logo.png";
+import { handleLogout } from "../utils/logout";
 
 function NavigationBar({ onLoginClick }) {
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+
   return (
     <Navbar bg="dark" variant="dark" expand="lg">
       <Container>
@@ -25,9 +28,25 @@ function NavigationBar({ onLoginClick }) {
             <Nav.Link href="#" className="text-light">
               O nas
             </Nav.Link>
-            <Nav.Link as="button" onClick={onLoginClick} className="text-light">
-              Logowanie
-            </Nav.Link>
+
+            {isLoggedIn ? (
+              <Nav.Link
+                as="button"
+                onClick={handleLogout}
+                className="text-light"
+              >
+                Wyloguj
+              </Nav.Link>
+            ) : (
+              <Nav.Link
+                as="button"
+                onClick={onLoginClick}
+                className="text-light"
+              >
+                Logowanie
+              </Nav.Link>
+            )}
+
             <ThemeToggle />
           </Nav>
         </Navbar.Collapse>
