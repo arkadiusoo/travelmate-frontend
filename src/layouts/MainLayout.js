@@ -1,12 +1,12 @@
 import React from "react";
 import { Container } from "react-bootstrap";
-import Navbar from "../components/Navbar";
+import NavigationBar from "../components/Navbar";
 import Footer from "../components/Footer";
 
-function MainLayout({ children }) {
+function MainLayout({ children, onLoginClick }) {
   return (
     <>
-      <Navbar />
+      <NavigationBar onLoginClick={onLoginClick} />
       <Container className="my-5">{children}</Container>
       <Footer />
     </>
