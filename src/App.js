@@ -1,9 +1,42 @@
-import React from "react";
+import React, { useState } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import Home from "./pages/Home";
-import "bootstrap/dist/css/bootstrap.min.css";
+import Dashboard from "./pages/Dashboard";
+// import TripsPage from "./pages/TripsPage";
+// import BudgetPage from "./pages/BudgetPage";
+// import ParticipantsPage from "./pages/ParticipantsPage";
 
 function App() {
-  return <Home />;
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  return (
+    <Router>
+      <Routes>
+        {!isLoggedIn ? (
+          <Route
+            path="*"
+            element={<Home onLogin={() => setIsLoggedIn(true)} />}
+          />
+        ) : (
+          <>
+            <Route
+              path="/"
+              element={<Dashboard onLogout={() => setIsLoggedIn(false)} />}
+            />
+            {/* <Route path="/trips" element={<TripsPage />} /> */}
+            {/* <Route path="/budget" element={<BudgetPage />} /> */}
+            {/* <Route path="/participants" element={<ParticipantsPage />} /> */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </>
+        )}
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;

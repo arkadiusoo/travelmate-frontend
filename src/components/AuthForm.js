@@ -1,14 +1,16 @@
 import React, { useRef, useLayoutEffect, useState, useContext } from "react";
 import { Form, Button } from "react-bootstrap";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
-import { ThemeContext } from "../styles/ThemeContext"; // 👈 import kontekstu
+import { ThemeContext } from "../styles/ThemeContext";
+import { useNavigate } from "react-router-dom"; // 🧭 import nawigacji
 import "../styles/authTransition.css";
 
 function AuthForm({ isLogin, onSwitchMode }) {
-  const { darkMode } = useContext(ThemeContext); // 👈 odczyt trybu
+  const { darkMode } = useContext(ThemeContext);
   const nodeRef = useRef(null);
   const containerRef = useRef(null);
   const [height, setHeight] = useState("auto");
+  const navigate = useNavigate(); // 🧭 inicjalizacja hooka
 
   useLayoutEffect(() => {
     if (nodeRef.current && containerRef.current) {
@@ -28,6 +30,17 @@ function AuthForm({ isLogin, onSwitchMode }) {
     if (nodeRef.current && containerRef.current) {
       const currentHeight = nodeRef.current.scrollHeight;
       containerRef.current.style.height = `${currentHeight}px`;
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (isLogin) {
+      // Możesz dodać weryfikację loginu tutaj
+      navigate("/"); // 🧭 przekierowanie do dashboardu
+    } else {
+      console.log("Register flow not implemented");
     }
   };
 
@@ -54,7 +67,7 @@ function AuthForm({ isLogin, onSwitchMode }) {
               darkMode ? "bg-dark text-light" : "bg-light text-dark"
             }`}
           >
-            <Form>
+            <Form onSubmit={handleSubmit}>
               {!isLogin && (
                 <Form.Group className="mb-3">
                   <Form.Label>Name</Form.Label>
