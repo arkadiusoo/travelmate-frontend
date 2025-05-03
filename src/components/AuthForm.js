@@ -1,35 +1,50 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Form, Button } from "react-bootstrap";
+import { CSSTransition, SwitchTransition } from "react-transition-group";
+import "../styles/authTransition.css";
 
-function AuthForm({ isLogin = true, onSwitchMode }) {
+function AuthForm({ isLogin, onSwitchMode }) {
+  const nodeRef = useRef(null);
+
   return (
-    <Form>
-      {!isLogin && (
-        <Form.Group className="mb-3">
-          <Form.Label>Name</Form.Label>
-          <Form.Control type="text" placeholder="Enter your name" />
-        </Form.Group>
-      )}
-      <Form.Group className="mb-3">
-        <Form.Label>Email</Form.Label>
-        <Form.Control type="email" placeholder="Enter email" />
-      </Form.Group>
-      <Form.Group className="mb-3">
-        <Form.Label>Password</Form.Label>
-        <Form.Control type="password" placeholder="Password" />
-      </Form.Group>
-      <Button type="submit" variant="primary" className="w-100 mb-2">
-        {isLogin ? "Log in" : "Register"}
-      </Button>
-      <div className="text-center">
-        <small>
-          {isLogin ? "Don't have an account?" : "Already have one?"}{" "}
-          <Button variant="link" onClick={onSwitchMode}>
-            {isLogin ? "Register" : "Log in"}
-          </Button>
-        </small>
-      </div>
-    </Form>
+    <SwitchTransition mode="out-in">
+      <CSSTransition
+        key={isLogin ? "login" : "register"}
+        timeout={1000}
+        classNames="fade-grow"
+        nodeRef={nodeRef}
+      >
+        <div ref={nodeRef}>
+          <Form>
+            {!isLogin && (
+              <Form.Group className="mb-3">
+                <Form.Label>Name</Form.Label>
+                <Form.Control type="text" placeholder="Enter your name" />
+              </Form.Group>
+            )}
+            <Form.Group className="mb-3">
+              <Form.Label>Email</Form.Label>
+              <Form.Control type="email" placeholder="Enter email" />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Password</Form.Label>
+              <Form.Control type="password" placeholder="Password" />
+            </Form.Group>
+            <Button type="submit" variant="primary" className="w-100 mb-2">
+              {isLogin ? "Log in" : "Register"}
+            </Button>
+            <div className="text-center">
+              <small>
+                {isLogin ? "Don't have an account?" : "Already have one?"}{" "}
+                <Button variant="link" onClick={onSwitchMode}>
+                  {isLogin ? "Register" : "Log in"}
+                </Button>
+              </small>
+            </div>
+          </Form>
+        </div>
+      </CSSTransition>
+    </SwitchTransition>
   );
 }
 
