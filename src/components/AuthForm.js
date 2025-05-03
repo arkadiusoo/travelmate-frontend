@@ -50,26 +50,29 @@ function AuthForm({ isLogin, onSwitchMode }) {
             <Form>
               {!isLogin && (
                 <Form.Group className="mb-3">
-                  <Form.Label>Name</Form.Label>
-                  <Form.Control type="text" placeholder="Enter your name" />
+                  <Form.Label>Imię</Form.Label>
+                  <Form.Control type="text" placeholder="Wprowadź swoje imię" />
                 </Form.Group>
               )}
               <Form.Group className="mb-3">
                 <Form.Label>Email</Form.Label>
-                <Form.Control type="email" placeholder="Enter email" />
+                <Form.Control
+                  type="email"
+                  placeholder="Wprowadź swój adres email"
+                />
               </Form.Group>
               <Form.Group className="mb-3">
-                <Form.Label>Password</Form.Label>
-                <Form.Control type="password" placeholder="Password" />
+                <Form.Label>Hasło</Form.Label>
+                <Form.Control type="password" placeholder="Hasło" />
               </Form.Group>
               <Button type="submit" variant="primary" className="w-100 mb-2">
-                {isLogin ? "Log in" : "Register"}
+                {isLogin ? "Zaloguj" : "Zarejestruj"}
               </Button>
               <div className="text-center">
                 <small>
-                  {isLogin ? "Don't have an account?" : "Already have one?"}{" "}
+                  {isLogin ? "Nie masz konta?" : "Posiadasz już konto?"}{" "}
                   <Button variant="link" onClick={onSwitchMode}>
-                    {isLogin ? "Register" : "Log in"}
+                    {isLogin ? "Zarejestruj się" : "Zaloguj się"}
                   </Button>
                 </small>
               </div>
