@@ -1,0 +1,25 @@
+import React, { useContext } from "react";
+import { Modal, Button } from "react-bootstrap";
+import { ThemeContext } from "../styles/ThemeContext";
+
+function ModalWrapper({ show, onClose, title, children }) {
+  const { darkMode } = useContext(ThemeContext);
+
+  const themeClass = darkMode ? "bg-dark text-light" : "bg-light text-dark";
+
+  return (
+    <Modal show={show} onHide={onClose} centered>
+      <Modal.Header className={themeClass}>
+        <Modal.Title>{title}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body className={themeClass}>{children}</Modal.Body>
+      <Modal.Footer className={themeClass}>
+        <Button variant={darkMode ? "light" : "secondary"} onClick={onClose}>
+          Close
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  );
+}
+
+export default ModalWrapper;
