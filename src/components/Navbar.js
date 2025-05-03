@@ -1,5 +1,6 @@
 import React from "react";
 import { Navbar, Nav, Container } from "react-bootstrap";
+import ThemeToggle from "./ThemeToggle";
 
 function NavigationBar() {
   return (
@@ -12,6 +13,7 @@ function NavigationBar() {
             <Nav.Link href="#">Start</Nav.Link>
             <Nav.Link href="#">O nas</Nav.Link>
             <Nav.Link href="#">Logowanie</Nav.Link>
+            <ThemeToggle />
           </Nav>
         </Navbar.Collapse>
       </Container>
