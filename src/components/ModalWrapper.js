@@ -15,7 +15,7 @@ function ModalWrapper({ show, onClose, title, children }) {
       <Modal.Body className={themeClass}>{children}</Modal.Body>
       <Modal.Footer className={themeClass}>
         <Button variant={darkMode ? "light" : "secondary"} onClick={onClose}>
-          Close
+          Zamknij
         </Button>
       </Modal.Footer>
     </Modal>

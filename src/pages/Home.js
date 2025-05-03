@@ -4,7 +4,7 @@ import MainLayout from "../layouts/MainLayout";
 import ModalWrapper from "../components/ModalWrapper";
 import AuthForm from "../components/AuthForm";
 
-function Home() {
+function Home({ onLogin }) {
   const [showModal, setShowModal] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
 
