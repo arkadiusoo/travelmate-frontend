@@ -1,70 +1,75 @@
-# Getting Started with Create React App
+# 🚀 TravelMate Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+An interactive frontend application (React + Bootstrap) for planning trips – part of the TravelMate project.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## ⚙️ Requirements
 
-### `npm start`
+- [Node.js (v18+)](https://nodejs.org/) – includes `npm`
+- Git (if cloning from repository)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🖥️ Installation (macOS & Windows)
 
-### `npm test`
+### 1. Install Node.js
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- **macOS** (Homebrew):
+  ```bash
+  brew install node
+  ```
+- **Windows**:  
+  Download and install from [https://nodejs.org](https://nodejs.org)
 
-### `npm run build`
+### 2. Clone the repository
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+git clone https://github.com/your-username/travelmate-frontend.git
+cd travelmate-frontend
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 3. Install dependencies
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+npm install
+```
 
-### `npm run eject`
+This will install:
+- `react`
+- `bootstrap`
+- `react-bootstrap`
+- `react-icons`
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+---
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## ▶️ Run the app
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```bash
+npm start
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 🧪 Other useful commands
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- `npm run build` – builds the app for production
+- `npm test` – runs tests
+- `npm run lint` *(if configured)* – checks code quality
 
-### Code Splitting
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 📦 Used Libraries
 
-### Analyzing the Bundle Size
+- [React](https://reactjs.org/)
+- [Bootstrap](https://getbootstrap.com/)
+- [React-Bootstrap](https://react-bootstrap.github.io/)
+- [React Icons](https://react-icons.github.io/)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+---
 
-### Making a Progressive Web App
+## 📝 License
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+MIT © 2025 TravelMate
