@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -12,9 +12,16 @@ import Dashboard from "./pages/Dashboard";
 // import ParticipantsPage from "./pages/ParticipantsPage";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    localStorage.getItem("isLoggedIn") === "true"
-  );
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("isLoggedIn") === "true";
+      setIsLoggedIn(stored);
+    } catch (err) {
+      console.warn("localStorage unavailable:", err);
+    }
+  }, []);
 
   return (
     <Router>
@@ -30,7 +37,7 @@ function App() {
             {/* <Route path="/trips" element={<TripsPage />} /> */}
             {/* <Route path="/budget" element={<BudgetPage />} /> */}
             {/* <Route path="/participants" element={<ParticipantsPage />} /> */}
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route path="*" element={<Navigate to="/dashboard" />} />
           </>
         )}
       </Routes>
