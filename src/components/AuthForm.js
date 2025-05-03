@@ -2,15 +2,14 @@ import React, { useRef, useLayoutEffect, useState, useContext } from "react";
 import { Form, Button } from "react-bootstrap";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 import { ThemeContext } from "../styles/ThemeContext";
-import { useNavigate } from "react-router-dom"; // 🧭 import nawigacji
+import { useNavigate } from "react-router-dom";
 import "../styles/authTransition.css";
 
 function AuthForm({ isLogin, onSwitchMode }) {
   const { darkMode } = useContext(ThemeContext);
   const nodeRef = useRef(null);
   const containerRef = useRef(null);
-  const [height, setHeight] = useState("auto");
-  const navigate = useNavigate(); // 🧭 inicjalizacja hooka
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
 
   useLayoutEffect(() => {
@@ -38,8 +37,7 @@ function AuthForm({ isLogin, onSwitchMode }) {
     e.preventDefault();
 
     if (isLogin) {
-      // Możesz dodać weryfikację loginu tutaj
-      navigate("/"); // 🧭 przekierowanie do dashboardu
+      navigate("/");
     } else {
       console.log("Register flow not implemented");
     }
@@ -96,7 +94,7 @@ function AuthForm({ isLogin, onSwitchMode }) {
                   e.preventDefault();
                   const finalEmail =
                     email.trim() !== "" ? email : "Adam@gmail.com";
-                  localStorage.setItem("userEmail", finalEmail); // <-- Zapis
+                  localStorage.setItem("userEmail", finalEmail);
                   localStorage.setItem("isLoggedIn", "true");
                   window.location.href = "/dashboard";
                 }}
