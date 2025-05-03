@@ -24,6 +24,7 @@ export function ThemeProvider({ children }) {
     body.classList.toggle("text-light", isDark);
     body.classList.toggle("bg-light", !isDark);
     body.classList.toggle("text-dark", !isDark);
+    document.documentElement.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
   };
 
   return (
