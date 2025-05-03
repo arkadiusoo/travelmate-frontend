@@ -3,10 +3,14 @@ import { Container, Row, Col, Card, Button } from "react-bootstrap";
 import MainLayout from "../layouts/MainLayout";
 
 function Dashboard({ onLogout }) {
+  const email = localStorage.getItem("userEmail") || "Adam@gmail.com";
+  const nameFromEmail = email.split("@")[0];
+  const capitalizedName =
+    nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
   return (
     <MainLayout>
       <Container fluid className="py-4">
-        <h1 className="mb-4 text-center">👋 Witaj, Arkadiusz!</h1>
+        <h1 className="mb-4 text-center">👋 Witaj, {capitalizedName}!</h1>
 
         <Row className="mb-4">
           <Col md={6} lg={4}>
@@ -70,7 +74,13 @@ function Dashboard({ onLogout }) {
         </Row>
 
         <div className="text-center mt-5">
-          <Button variant="outline-danger" onClick={onLogout}>
+          <Button
+            variant="outline-danger"
+            onClick={() => {
+              localStorage.removeItem("isLoggedIn");
+              window.location.href = "/";
+            }}
+          >
             Wyloguj się
           </Button>
         </div>

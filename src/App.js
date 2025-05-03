@@ -12,7 +12,9 @@ import Dashboard from "./pages/Dashboard";
 // import ParticipantsPage from "./pages/ParticipantsPage";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    localStorage.getItem("isLoggedIn") === "true"
+  );
 
   return (
     <Router>
@@ -24,10 +26,7 @@ function App() {
           />
         ) : (
           <>
-            <Route
-              path="/"
-              element={<Dashboard onLogout={() => setIsLoggedIn(false)} />}
-            />
+            <Route path="/dashboard" element={<Dashboard />} />
             {/* <Route path="/trips" element={<TripsPage />} /> */}
             {/* <Route path="/budget" element={<BudgetPage />} /> */}
             {/* <Route path="/participants" element={<ParticipantsPage />} /> */}
