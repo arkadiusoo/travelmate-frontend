@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Form, Button, Row, Col, Container } from "react-bootstrap";
+import { Form, Button, Row, Col, Container, Alert } from "react-bootstrap";
 
 const allParticipants = ["Adam", "Ola", "Bartek", "Kasia", "Darek"];
 
@@ -14,6 +14,13 @@ function ExpenseForm() {
       allParticipants.map((name) => [name, defaultShare])
     );
   });
+  const [formData, setFormData] = useState({
+    title: "",
+    amount: "",
+    payer: "",
+    description: "",
+  });
+  const [error, setError] = useState("");
 
   const updateAutoShares = (updatedParticipants) => {
     const active = Object.entries(updatedParticipants)
@@ -62,30 +69,90 @@ function ExpenseForm() {
     setCustomSplit(!customSplit);
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError("");
+
+    const { title, amount, payer } = formData;
+    if (!title || !amount || !payer) {
+      setError(
+        "Uzupełnij wszystkie wymagane pola (nazwa, kwota, kto zapłacił)"
+      );
+      return;
+    }
+
+    const totalShare = Object.entries(shares)
+      .filter(([name]) => activeParticipants[name])
+      .reduce((sum, [_, val]) => sum + val, 0);
+
+    if (Math.round(totalShare) !== 100) {
+      setError("Udziały uczestników muszą sumować się do 100%");
+      return;
+    }
+
+    console.log("Dane wydatku:", {
+      ...formData,
+      shares: Object.fromEntries(
+        Object.entries(shares).filter(([name]) => activeParticipants[name])
+      ),
+    });
+  };
+
   return (
-    <Form>
+    <Form onSubmit={handleSubmit}>
       <Container fluid>
         <Row>
           <Col md={6}>
+            {error && <Alert variant="danger">{error}</Alert>}
             <Form.Group className="mb-3">
               <Form.Label>Nazwa wydatku</Form.Label>
-              <Form.Control type="text" placeholder="np. Hotel" />
+              <Form.Control
+                type="text"
+                name="title"
+                placeholder="np. Hotel"
+                value={formData.title}
+                onChange={handleInputChange}
+              />
             </Form.Group>
 
             <Form.Group className="mb-3">
               <Form.Label>Kwota (zł)</Form.Label>
-              <Form.Control type="number" placeholder="np. 200" />
+              <Form.Control
+                type="number"
+                name="amount"
+                placeholder="np. 200"
+                value={formData.amount}
+                onChange={handleInputChange}
+              />
             </Form.Group>
 
             <Form.Group className="mb-3">
               <Form.Label>Kto zapłacił</Form.Label>
-              <Form.Control type="text" placeholder="np. Adam" />
+              <Form.Control
+                type="text"
+                name="payer"
+                placeholder="np. Adam"
+                value={formData.payer}
+                onChange={handleInputChange}
+              />
             </Form.Group>
 
             <Form.Group className="mb-3">
               <Form.Label>Opis (opcjonalnie)</Form.Label>
-              <Form.Control type="text" placeholder="np. 2 noce w hotelu XYZ" />
+              <Form.Control
+                type="text"
+                name="description"
+                placeholder="np. 2 noce w hotelu XYZ"
+                value={formData.description}
+                onChange={handleInputChange}
+              />
             </Form.Group>
+
             <Button type="submit" variant="primary" className="w-100">
               Dodaj
             </Button>
