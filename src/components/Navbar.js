@@ -10,7 +10,10 @@ function NavigationBar({ onLoginClick }) {
   return (
     <Navbar bg="dark" variant="dark" expand="lg">
       <Container>
-        <Navbar.Brand href="#" className="d-flex align-items-center gap-2">
+        <Navbar.Brand
+          href="\dashboard"
+          className="d-flex align-items-center gap-2"
+        >
           <img
             src={logo}
             alt="Logo"
