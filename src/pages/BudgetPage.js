@@ -1,25 +1,37 @@
-import React from "react";
+import React, { useState } from "react";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import ExpenseList from "../components/budget/ExpenseList";
-import ExpenseForm from "../components/budget/ExpenseForm";
 import BudgetSummary from "../components/budget/BudgetSummary";
+import ModalWrapper from "../components/ModalWrapper";
+import ExpenseForm from "../components/budget/ExpenseForm";
 
 function BudgetPage() {
-  const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
 
   return (
     <MainLayout>
       <Container>
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h1 className="text-center flex-grow-1 mb-0">💰 Budżet podróży</h1>
-          <Button variant="secondary" onClick={() => navigate("/dashboard")}>
-            ← Powrót
-          </Button>
-        </div>
+        <h1 className="mb-4 text-center">💰 Budżet podróży</h1>
 
         <Row className="mb-4">
+          <Col md={4}>
+            <Card className="shadow-sm mb-4">
+              <Card.Body>
+                <h5 className="mb-3">📊 Podsumowanie budżetu</h5>
+                <BudgetSummary />
+              </Card.Body>
+            </Card>
+
+            <Button
+              variant="primary"
+              className="w-100"
+              onClick={() => setShowModal(true)}
+            >
+              ➕ Dodaj wydatek
+            </Button>
+          </Col>
+
           <Col md={8}>
             <Card className="shadow-sm">
               <Card.Body>
@@ -28,21 +40,15 @@ function BudgetPage() {
               </Card.Body>
             </Card>
           </Col>
-          <Col md={4}>
-            <Card className="shadow-sm mb-4">
-              <Card.Body>
-                <h5 className="mb-3">➕ Dodaj wydatek</h5>
-                <ExpenseForm />
-              </Card.Body>
-            </Card>
-            <Card className="shadow-sm">
-              <Card.Body>
-                <h5 className="mb-3">📊 Podsumowanie budżetu</h5>
-                <BudgetSummary />
-              </Card.Body>
-            </Card>
-          </Col>
         </Row>
+
+        <ModalWrapper
+          show={showModal}
+          onClose={() => setShowModal(false)}
+          title="Dodaj wydatek"
+        >
+          <ExpenseForm />
+        </ModalWrapper>
       </Container>
     </MainLayout>
   );
