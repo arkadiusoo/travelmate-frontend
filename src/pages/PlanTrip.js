@@ -325,7 +325,7 @@ export default function PlanTrip() {
                 value={form.date}
                 onChange={handleChange}
                 required
-                min={dates[0] || today}
+                min={today}
               />
             </Form.Group>
             <Form.Group className="mb-3" controlId="formDescription">
