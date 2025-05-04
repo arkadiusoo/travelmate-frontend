@@ -3,7 +3,6 @@ import { Container, Row, Col, Card, Button } from "react-bootstrap";
 import MainLayout from "../layouts/MainLayout";
 import ExpenseList from "../components/budget/ExpenseList";
 import BudgetSummary from "../components/budget/BudgetSummary";
-import ModalWrapper from "../components/ModalWrapper";
 import ExpenseForm from "../components/budget/ExpenseForm";
 import WideModalWrapper from "../components/WideModalWrapper";
 
