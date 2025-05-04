@@ -5,6 +5,7 @@ import ExpenseList from "../components/budget/ExpenseList";
 import BudgetSummary from "../components/budget/BudgetSummary";
 import ModalWrapper from "../components/ModalWrapper";
 import ExpenseForm from "../components/budget/ExpenseForm";
+import WideModalWrapper from "../components/WideModalWrapper";
 
 function BudgetPage() {
   const [showModal, setShowModal] = useState(false);
@@ -42,13 +43,13 @@ function BudgetPage() {
           </Col>
         </Row>
 
-        <ModalWrapper
+        <WideModalWrapper
           show={showModal}
           onClose={() => setShowModal(false)}
           title="Dodaj wydatek"
         >
           <ExpenseForm />
-        </ModalWrapper>
+        </WideModalWrapper>
       </Container>
     </MainLayout>
   );

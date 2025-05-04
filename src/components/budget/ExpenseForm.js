@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Form, Button, Row, Col } from "react-bootstrap";
+import { Form, Button, Row, Col, Container } from "react-bootstrap";
 
 const allParticipants = ["Adam", "Ola", "Bartek", "Kasia", "Darek"];
 
@@ -64,58 +64,68 @@ function ExpenseForm() {
 
   return (
     <Form>
-      <Form.Group className="mb-3">
-        <Form.Label>Nazwa wydatku</Form.Label>
-        <Form.Control type="text" placeholder="np. Hotel" />
-      </Form.Group>
+      <Container fluid>
+        <Row>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Nazwa wydatku</Form.Label>
+              <Form.Control type="text" placeholder="np. Hotel" />
+            </Form.Group>
 
-      <Form.Group className="mb-3">
-        <Form.Label>Kwota (zł)</Form.Label>
-        <Form.Control type="number" placeholder="np. 200" />
-      </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Kwota (zł)</Form.Label>
+              <Form.Control type="number" placeholder="np. 200" />
+            </Form.Group>
 
-      <Form.Group className="mb-3">
-        <Form.Label>Kto zapłacił</Form.Label>
-        <Form.Control type="text" placeholder="np. Adam" />
-      </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Kto zapłacił</Form.Label>
+              <Form.Control type="text" placeholder="np. Adam" />
+            </Form.Group>
 
-      <Form.Group className="mb-3">
-        <Form.Check
-          type="checkbox"
-          label="Własny podział kosztów"
-          checked={customSplit}
-          onChange={handleCustomSplitToggle}
-        />
-      </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Opis (opcjonalnie)</Form.Label>
+              <Form.Control type="text" placeholder="np. 2 noce w hotelu XYZ" />
+            </Form.Group>
+            <Button type="submit" variant="primary" className="w-100">
+              Dodaj
+            </Button>
+          </Col>
 
-      <Form.Group className="mb-3">
-        <Form.Label>Uczestnicy i udziały</Form.Label>
-        {allParticipants.map((name) => (
-          <Row key={name} className="align-items-center mb-2">
-            <Col xs={1}>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Uczestnicy i udziały</Form.Label>
               <Form.Check
                 type="checkbox"
-                checked={activeParticipants[name]}
-                onChange={() => handleToggleParticipant(name)}
+                label="Własny podział kosztów"
+                checked={customSplit}
+                onChange={handleCustomSplitToggle}
+                className="mb-3"
               />
-            </Col>
-            <Col>{name}</Col>
-            <Col>
-              <Form.Control
-                type="number"
-                value={shares[name].toFixed(2)}
-                disabled={!customSplit || !activeParticipants[name]}
-                onChange={(e) => handleShareChange(name, e.target.value)}
-              />
-            </Col>
-            <Col>%</Col>
-          </Row>
-        ))}
-      </Form.Group>
-
-      <Button type="submit" variant="primary" className="w-100">
-        Dodaj
-      </Button>
+              {allParticipants.map((name) => (
+                <Row key={name} className="align-items-center mb-2">
+                  <Col xs={1}>
+                    <Form.Check
+                      type="checkbox"
+                      checked={activeParticipants[name]}
+                      onChange={() => handleToggleParticipant(name)}
+                    />
+                  </Col>
+                  <Col>{name}</Col>
+                  <Col>
+                    <Form.Control
+                      type="number"
+                      value={shares[name].toFixed(2)}
+                      disabled={!customSplit || !activeParticipants[name]}
+                      onChange={(e) => handleShareChange(name, e.target.value)}
+                    />
+                  </Col>
+                  <Col>%</Col>
+                </Row>
+              ))}
+            </Form.Group>
+          </Col>
+        </Row>
+      </Container>
     </Form>
   );
 }
