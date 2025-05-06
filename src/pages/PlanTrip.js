@@ -15,7 +15,6 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import MainLayout from '../layouts/MainLayout';
 
-// Fix Leaflet default icon paths
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -23,7 +22,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl:     require('leaflet/dist/images/marker-shadow.png'),
 });
 
-// Component to handle map click events and report latitude/longitude
 function LocationSelector({ onSelect }) {
   useMapEvents({
     click(e) {
@@ -33,7 +31,6 @@ function LocationSelector({ onSelect }) {
   return null;
 }
 
-// Component that grabs the map instance via hook
 function MapSetter({ setMap }) {
   const map = useMap();
   useEffect(() => {
@@ -63,7 +60,6 @@ export default function PlanTrip() {
 
   const today = new Date().toISOString().split('T')[0];
 
-  // Load trip details and points
   useEffect(() => {
     fetch(`${API_BASE}/trips/${tripId}`)
       .then(res => res.json())
@@ -83,27 +79,52 @@ export default function PlanTrip() {
     const value = e.target.value;
     setSearch(value);
     const len = value.length;
-    if (len >= 3 && (len === 3 || (len % 2 === 1))) {
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&countrycodes=pl&q=${encodeURIComponent(value)}`)
-        .then(res => res.json())
-        .then(data => setSuggestions(data))
-        .catch(console.error);
+    if (len >= 3) {
+      fetch(`${API_BASE}/places/search?q=${encodeURIComponent(value)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.predictions) {
+          setSuggestions(data.predictions.map(p => ({
+            description: p.description,
+            placeId: p.place_id
+          })));
+        }
+      })
+      .catch(console.error);
+    
     } else {
       setSuggestions([]); // wyczyść jeśli za mało znaków
     }
   };
 
-  const handleSuggestionClick = (sugg) => {
-    const latlng = { lat: parseFloat(sugg.lat), lng: parseFloat(sugg.lon) };
-    setPosition(latlng);
-    setForm({ title: sugg.display_name.split(',')[0], date: today, description: '' });
-
-    setEditingId(null);
-    setShowModal(true);
-    setSuggestions([]);
-    setSearch('');
+  const handleSuggestionClick = (s) => {
+    fetch(`${API_BASE}/places/details?placeId=${s.placeId}`)
+      .then(res => res.json())
+      .then(result => {
+        const location = result.result.geometry.location;
+  
+        // Ustawienie pozycji
+        const latlng = { lat: location.lat, lng: location.lng };
+        setPosition(latlng);
+  
+        // Przesunięcie mapy do miejsca
+        if (map) map.flyTo([latlng.lat, latlng.lng], 13);
+  
+        // Ustawienie formularza
+        setForm({
+          title: result.result.name || s.description.split(',')[0],
+          date: today,
+          description: result.result.formatted_address || ''
+        });
+  
+        setEditingId(null);
+        setShowModal(true);
+        setSuggestions([]);
+        setSearch('');
+      })
+      .catch(console.error);
   };
-
+  
   const handleMapClick = async (latlng) => {
     setPosition(latlng);
     setForm({ title: '', date: today, description: '' });
@@ -242,11 +263,12 @@ export default function PlanTrip() {
   />
   {suggestions.length > 0 && (
     <ListGroup className="mt-1">
-      {suggestions.map((s, idx) => (
-        <ListGroup.Item key={idx} action onClick={() => handleSuggestionClick(s)}>
-          {s.display_name}
-        </ListGroup.Item>
-      ))}
+      {suggestions.map((s) => (
+  <ListGroup.Item key={s.place_id} action onClick={() => handleSuggestionClick(s)}>
+    {s.description}
+  </ListGroup.Item>
+))}
+
     </ListGroup>
   )}
 </Form.Group>
