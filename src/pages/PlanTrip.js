@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Modal, Form, Spinner, InputGroup, Row, Col } from 'react-bootstrap';
+import { Button, Card, Modal, Form, Spinner, InputGroup, Row, Col, ListGroup } from 'react-bootstrap';
 import { BsTrash, BsPencil, BsArrowDown } from 'react-icons/bs';
 import {
   MapContainer,
@@ -57,6 +57,9 @@ export default function PlanTrip() {
   const [filterDate, setFilterDate] = useState('');
   const [routeCoords, setRouteCoords] = useState([]);
   const [map, setMap] = useState(null);
+  const [search, setSearch] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -75,6 +78,31 @@ export default function PlanTrip() {
       }))))
       .catch(console.error);
   }, [tripId]);
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearch(value);
+    const len = value.length;
+    if (len >= 3 && (len === 3 || (len % 2 === 1))) {
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&countrycodes=pl&q=${encodeURIComponent(value)}`)
+        .then(res => res.json())
+        .then(data => setSuggestions(data))
+        .catch(console.error);
+    } else {
+      setSuggestions([]); // wyczyść jeśli za mało znaków
+    }
+  };
+
+  const handleSuggestionClick = (sugg) => {
+    const latlng = { lat: parseFloat(sugg.lat), lng: parseFloat(sugg.lon) };
+    setPosition(latlng);
+    setForm({ title: sugg.display_name.split(',')[0], date: today, description: '' });
+
+    setEditingId(null);
+    setShowModal(true);
+    setSuggestions([]);
+    setSearch('');
+  };
 
   const handleMapClick = async (latlng) => {
     setPosition(latlng);
@@ -202,56 +230,44 @@ export default function PlanTrip() {
   return (
     <MainLayout>
       <h1 className="mb-4 text-center">{tripName}</h1>
-
-      <div style={{ height: '450px' }} className="mb-4">
-        <MapContainer
-          center={[52.237049, 21.017532]}
-          zoom={6}
-          style={{ height: '100%', width: '100%' }}
-        >
-          <MapSetter setMap={setMap} />
-          <TileLayer
-            attribution="&copy; OpenStreetMap contributors"
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <LocationSelector onSelect={handleMapClick} />
-          {displayPoints.map(pt => (
-            <Marker key={pt.id} position={[pt.position.lat, pt.position.lng]}>
-              <Popup>
-                <strong>{pt.title}</strong><br />{pt.date}
-              </Popup>
-            </Marker>
-          ))}
-          {routeCoords.length > 1 && (
-            <Polyline positions={routeCoords} pathOptions={{ color: '#0d6efd', weight: 4 }} />
-          )}
-        </MapContainer>
-      </div>
-
       <Row className="align-items-center mb-3">
-        <Col md={4} className="mb-2">
+        <Col md={5} className="mt-3">
+        <Form.Group className="mb-3">
+  <Form.Label>Wyszukaj miejsce</Form.Label>
+  <Form.Control
+    type="text"
+    placeholder="Wpisz nazwę miejsca..."
+    value={search}
+    onChange={handleSearchChange}
+  />
+  {suggestions.length > 0 && (
+    <ListGroup className="mt-1">
+      {suggestions.map((s, idx) => (
+        <ListGroup.Item key={idx} action onClick={() => handleSuggestionClick(s)}>
+          {s.display_name}
+        </ListGroup.Item>
+      ))}
+    </ListGroup>
+  )}
+</Form.Group>
           <Form.Select value={filterDate} onChange={e => setFilterDate(e.target.value)}>
             <option value="">Wszystkie dni</option>
             {dates.map(d => <option key={d} value={d}>{new Date(d).toLocaleDateString('pl-PL')}</option>)}
           </Form.Select>
-        </Col>
-        <Col className="text-md-end">
+          <Col className="text-md-end">
           <Button variant="outline-secondary" size="sm" onClick={() => setFilterDate('')}>
             Wyczyść filtr
           </Button>
-        </Col>
-      </Row>
-
-      <div className="timeline">
-        {displayPoints.length === 0 ? (
-          <p className="text-center">Brak punktów na wybrany dzień.</p>
-        ) : displayPoints.map((pt, idx) => (
-          <div key={pt.id} className="d-flex flex-column align-items-center mb-4">
-            <Card
+          <div className="timeline">
+            {displayPoints.length === 0 ? (
+              <p className="text-center">Brak punktów na wybrany dzień.</p>
+            ) : displayPoints.map((pt, idx) => (
+            <div key={pt.id} className="d-flex flex-column align-items-center mb-4">
+              <Card
               className={`shadow-sm w-75 ${new Date(pt.date) < new Date(today) ? 'bg-light text-muted' : ''}`}
               onClick={() => handleZoomToPoint(pt)}
               style={{ cursor: 'pointer' }}
-            >
+              >
               <Card.Body className="d-flex justify-content-between">
                 <div>
                   <h5>{pt.title}</h5>
@@ -285,6 +301,36 @@ export default function PlanTrip() {
           </div>
         ))}
       </div>
+        </Col>
+        </Col>
+        <Col md={7}>
+        <div style={{ height: '450px' }} className="mb-4">
+        <MapContainer
+          center={[52.237049, 21.017532]}
+          zoom={6}
+          style={{ height: '100%', width: '100%' }}
+        >
+          <MapSetter setMap={setMap} />
+          <TileLayer
+            attribution="&copy; OpenStreetMap contributors"
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <LocationSelector onSelect={handleMapClick} />
+          {displayPoints.map(pt => (
+            <Marker key={pt.id} position={[pt.position.lat, pt.position.lng]}>
+              <Popup>
+                <strong>{pt.title}</strong><br />{pt.date}
+              </Popup>
+            </Marker>
+          ))}
+          {routeCoords.length > 1 && (
+            <Polyline positions={routeCoords} pathOptions={{ color: '#0d6efd', weight: 4 }} />
+          )}
+        </MapContainer>
+      </div>
+        </Col>
+      </Row>
+
 
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton>
