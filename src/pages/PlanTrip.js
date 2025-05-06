@@ -56,6 +56,12 @@ export default function PlanTrip() {
   const [map, setMap] = useState(null);
   const [search, setSearch] = useState('');
   const [suggestions, setSuggestions] = useState([]);
+  const [showAutoModal, setShowAutoModal] = useState(false);
+const [autoForm, setAutoForm] = useState({
+  city: '',
+  dateFrom: '',
+  dateTo: ''
+});
   
 
   const today = new Date().toISOString().split('T')[0];
@@ -93,7 +99,7 @@ export default function PlanTrip() {
       .catch(console.error);
     
     } else {
-      setSuggestions([]); // wyczyść jeśli za mało znaków
+      setSuggestions([]);
     }
   };
 
@@ -103,14 +109,11 @@ export default function PlanTrip() {
       .then(result => {
         const location = result.result.geometry.location;
   
-        // Ustawienie pozycji
         const latlng = { lat: location.lat, lng: location.lng };
         setPosition(latlng);
   
-        // Przesunięcie mapy do miejsca
         if (map) map.flyTo([latlng.lat, latlng.lng], 13);
   
-        // Ustawienie formularza
         setForm({
           title: result.result.name || s.description.split(',')[0],
           date: today,
@@ -254,6 +257,13 @@ export default function PlanTrip() {
       <Row className="align-items-center mb-3">
         <Col md={5} className="mt-3">
         <Form.Group className="mb-3">
+  <div className="d-flex justify-content-end mb-2">
+  <Button
+    variant="success"
+    onClick={() => setShowAutoModal(true)}>
+    Generuj wycieczkę automatycznie
+  </Button>
+  </div>
   <Form.Label>Wyszukaj miejsce</Form.Label>
   <Form.Control
     type="text"
@@ -280,10 +290,10 @@ export default function PlanTrip() {
           <Button variant="outline-secondary" size="sm" onClick={() => setFilterDate('')}>
             Wyczyść filtr
           </Button>
-          <div className="timeline">
-            {displayPoints.length === 0 ? (
-              <p className="text-center">Brak punktów na wybrany dzień.</p>
-            ) : displayPoints.map((pt, idx) => (
+          <div className="timeline" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+  {displayPoints.length === 0 ? (
+    <p className="text-center">Brak punktów na wybrany dzień.</p>
+  ) : displayPoints.map((pt, idx) => (
             <div key={pt.id} className="d-flex flex-column align-items-center mb-4">
               <Card
               className={`shadow-sm w-75 ${new Date(pt.date) < new Date(today) ? 'bg-light text-muted' : ''}`}
@@ -414,6 +424,78 @@ export default function PlanTrip() {
           </Modal.Footer>
         </Form>
       </Modal>
+      <Modal show={showAutoModal} onHide={() => setShowAutoModal(false)} centered>
+  <Modal.Header closeButton>
+    <Modal.Title>Generuj wycieczkę</Modal.Title>
+  </Modal.Header>
+  <Modal.Body>
+    <Form>
+      <Form.Group className="mb-3">
+        <Form.Label>Miasto</Form.Label>
+        <Form.Control
+          type="text"
+          placeholder="Nazwa miasta"
+          value={autoForm.city}
+          onChange={(e) => setAutoForm({ ...autoForm, city: e.target.value })}
+        />
+      </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>Data rozpoczęcia</Form.Label>
+        <Form.Control
+          type="date"
+          value={autoForm.dateFrom}
+          min={today}
+          onChange={(e) => setAutoForm({ ...autoForm, dateFrom: e.target.value })}
+        />
+      </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>Data zakończenia</Form.Label>
+        <Form.Control
+          type="date"
+          value={autoForm.dateTo}
+          min={autoForm.dateFrom || today}
+          onChange={(e) => setAutoForm({ ...autoForm, dateTo: e.target.value })}
+        />
+      </Form.Group>
+    </Form>
+  </Modal.Body>
+  <Modal.Footer>
+    <Button variant="secondary" onClick={() => setShowAutoModal(false)}>Anuluj</Button>
+    <Button
+      variant="primary"
+      onClick={() => {
+        const prompt = `Miasto : ${autoForm.city}, Data : ${autoForm.dateFrom} - ${autoForm.dateTo}`;
+
+fetch(`${API_BASE}/chat`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ prompt })
+})
+.then(res => res.json())
+.then(data => {
+  const newPoints = data.map(p => ({
+    id: crypto.randomUUID(),
+    title: p.name,
+    description: p.address,
+    date: p.date,
+    position: { lat: p.lat, lng: p.lng },
+    latitude: p.lat,
+    longitude: p.lng
+  }));
+
+  setPoints(prev => [...prev, ...newPoints].sort((a, b) => new Date(a.date) - new Date(b.date)));
+})
+.catch(console.error);
+
+
+        setShowAutoModal(false);
+      }}
+      disabled={!autoForm.city || !autoForm.dateFrom || !autoForm.dateTo}
+    >
+      Generuj
+    </Button>
+  </Modal.Footer>
+</Modal>
     </MainLayout>
   );
 }
