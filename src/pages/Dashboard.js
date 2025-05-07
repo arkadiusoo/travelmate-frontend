@@ -1,15 +1,17 @@
 import React from "react";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import { handleLogout } from "../utils/logout";
 import { useNavigate } from "react-router-dom";
 
 function Dashboard({ onLogout }) {
+  const navigate = useNavigate();
   const email = localStorage.getItem("userEmail") || "Adam@gmail.com";
   const nameFromEmail = email.split("@")[0];
   const capitalizedName =
     nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
-  const navigate = useNavigate();
+
   return (
     <MainLayout>
       <Container fluid className="py-4">
@@ -23,7 +25,7 @@ function Dashboard({ onLogout }) {
                 <Card.Text>
                   Zarządzaj zaplanowanymi i ukończonymi wyjazdami.
                 </Card.Text>
-                <Button variant="primary" className="w-100">
+                <Button variant="primary" className="w-100" onClick={() => navigate("/trips")}>
                   Przejdź do podróży
                 </Button>
               </Card.Body>
