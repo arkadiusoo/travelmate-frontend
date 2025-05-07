@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import { handleLogout } from "../utils/logout";
+import { useNavigate } from "react-router-dom";
 
 function Dashboard({ onLogout }) {
   const navigate = useNavigate();
@@ -37,7 +38,11 @@ function Dashboard({ onLogout }) {
                 <Card.Text>
                   Sprawdź bilans i rozlicz się z uczestnikami wyjazdu.
                 </Card.Text>
-                <Button variant="success" className="w-100">
+                <Button
+                  variant="success"
+                  className="w-100"
+                  onClick={() => navigate("/budget")}
+                >
                   Zarządzaj budżetem
                 </Button>
               </Card.Body>

@@ -9,7 +9,7 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import TripsPage from "./pages/TripsPage";
 import PlanTrip from "./pages/PlanTrip";
-// import BudgetPage from "./pages/BudgetPage";
+import BudgetPage from "./pages/BudgetPage";
 // import ParticipantsPage from "./pages/ParticipantsPage";
 
 function App() {
@@ -37,7 +37,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/trips" element={<TripsPage />} />
             <Route path="/trips/:id" element={<PlanTrip />} />
-            {/* <Route path="/budget" element={<BudgetPage />} /> */}
+            <Route path="/budget" element={<BudgetPage />} />
             {/* <Route path="/participants" element={<ParticipantsPage />} /> */}
             <Route path="*" element={<Navigate to="/dashboard" />} />
           </>
