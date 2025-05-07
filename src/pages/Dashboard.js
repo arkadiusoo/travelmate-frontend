@@ -3,7 +3,6 @@ import { Container, Row, Col, Card, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import { handleLogout } from "../utils/logout";
-import { useNavigate } from "react-router-dom";
 
 function Dashboard({ onLogout }) {
   const navigate = useNavigate();
@@ -25,7 +24,11 @@ function Dashboard({ onLogout }) {
                 <Card.Text>
                   Zarządzaj zaplanowanymi i ukończonymi wyjazdami.
                 </Card.Text>
-                <Button variant="primary" className="w-100" onClick={() => navigate("/trips")}>
+                <Button
+                  variant="primary"
+                  className="w-100"
+                  onClick={() => navigate("/trips")}
+                >
                   Przejdź do podróży
                 </Button>
               </Card.Body>
