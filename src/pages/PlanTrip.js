@@ -31,11 +31,20 @@ function LocationSelector({ onSelect }) {
   return null;
 }
 
-function MapSetter({ setMap }) {
+function MapSetter({ setMap, setHasUserInteracted }) {
   const map = useMap();
+
   useEffect(() => {
     setMap(map);
-  }, [map, setMap]);
+
+    const handleMoveStart = () => setHasUserInteracted(true);
+    map.on('movestart', handleMoveStart);
+
+    return () => {
+      map.off('movestart', handleMoveStart);
+    };
+  }, [map, setMap, setHasUserInteracted]);
+
   return null;
 }
 
@@ -57,11 +66,14 @@ export default function PlanTrip() {
   const [search, setSearch] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showAutoModal, setShowAutoModal] = useState(false);
-const [autoForm, setAutoForm] = useState({
+  const [routeDistance, setRouteDistance] = useState(null);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const [autoForm, setAutoForm] = useState({
   city: '',
   dateFrom: '',
   dateTo: ''
 });
+
   
 
   const today = new Date().toISOString().split('T')[0];
@@ -230,18 +242,33 @@ const [autoForm, setAutoForm] = useState({
   const displayPoints = points.filter(p => !filterDate || p.date === filterDate);
 
   useEffect(() => {
-    if (displayPoints.length < 2) return;
+    if (!filterDate || displayPoints.length < 2) {
+      setRouteCoords([]);
+      setRouteDistance(null); // czyść odległość
+      return;
+    }
+  
     const coords = displayPoints.map(p => `${p.position.lng},${p.position.lat}`).join(';');
     fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`)
       .then(res => res.json())
       .then(data => {
         if (data.routes?.length) {
-          const geo = data.routes[0].geometry.coordinates;
+          const route = data.routes[0];
+          const geo = route.geometry.coordinates;
           setRouteCoords(geo.map(c => [c[1], c[0]]));
+          setRouteDistance(route.distance); // <-- Ustaw długość trasy w metrach
         }
       })
       .catch(console.error);
-  }, [displayPoints]);
+  }, [displayPoints, filterDate]);
+  
+  useEffect(() => {
+    if (!map || displayPoints.length === 0 || hasUserInteracted) return;
+  
+    const bounds = L.latLngBounds(displayPoints.map(p => [p.position.lat, p.position.lng]));
+    map.fitBounds(bounds, { padding: [50, 50] });
+  }, [filterDate, displayPoints, map, hasUserInteracted]);
+  
 
   const handleZoomToPoint = (pt) => {
     if (!map) {
@@ -282,14 +309,18 @@ const [autoForm, setAutoForm] = useState({
     </ListGroup>
   )}
 </Form.Group>
-          <Form.Select value={filterDate} onChange={e => setFilterDate(e.target.value)}>
+<Form.Select
+  className="mb-3"
+  value={filterDate}
+  onChange={e => {
+    setFilterDate(e.target.value);
+    setHasUserInteracted(false);
+  }}
+>
             <option value="">Wszystkie dni</option>
             {dates.map(d => <option key={d} value={d}>{new Date(d).toLocaleDateString('pl-PL')}</option>)}
           </Form.Select>
           <Col className="text-md-end">
-          <Button variant="outline-secondary" size="sm" onClick={() => setFilterDate('')}>
-            Wyczyść filtr
-          </Button>
           <div className="timeline" style={{ maxHeight: '500px', overflowY: 'auto' }}>
   {displayPoints.length === 0 ? (
     <p className="text-center">Brak punktów na wybrany dzień.</p>
@@ -300,32 +331,33 @@ const [autoForm, setAutoForm] = useState({
               onClick={() => handleZoomToPoint(pt)}
               style={{ cursor: 'pointer' }}
               >
-              <Card.Body className="d-flex justify-content-between">
-                <div>
-                  <h5>{pt.title}</h5>
-                  <small className="text-muted">
-                    {new Date(pt.date).toLocaleDateString('pl-PL')}
-                  </small>
-                  <p className="mt-2">{pt.description}</p>
-                </div>
-                <div>
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    className="me-2"
-                    onClick={e => { e.stopPropagation(); openEdit(pt); }}
-                  >
-                    <BsPencil />
-                  </Button>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={e => handleRemove(e, pt.id)}
-                  >
-                    <BsTrash />
-                  </Button>
-                </div>
-              </Card.Body>
+              <Card.Body className="d-flex">
+  <div className="flex-grow-1 me-3">
+    <h5>{pt.title}</h5>
+    <small className="text-muted">
+      {new Date(pt.date).toLocaleDateString('pl-PL')}
+    </small>
+    <p className="mt-2 mb-0">{pt.description}</p>
+  </div>
+  <div className="d-flex flex-column align-items-end">
+    <Button
+      variant="outline-primary"
+      size="sm"
+      className="mb-2"
+      onClick={e => { e.stopPropagation(); openEdit(pt); }}
+    >
+      <BsPencil />
+    </Button>
+    <Button
+      variant="outline-danger"
+      size="sm"
+      onClick={e => handleRemove(e, pt.id)}
+    >
+      <BsTrash />
+    </Button>
+  </div>
+</Card.Body>
+
             </Card>
             {idx < displayPoints.length - 1 && (
               <BsArrowDown size={24} color="#0d6efd" className="my-2" />
@@ -342,7 +374,8 @@ const [autoForm, setAutoForm] = useState({
           zoom={6}
           style={{ height: '100%', width: '100%' }}
         >
-          <MapSetter setMap={setMap} />
+<MapSetter setMap={setMap} setHasUserInteracted={setHasUserInteracted} />
+
           <TileLayer
             attribution="&copy; OpenStreetMap contributors"
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -360,10 +393,13 @@ const [autoForm, setAutoForm] = useState({
           )}
         </MapContainer>
       </div>
+      {filterDate && routeDistance != null && (
+  <p className="text-center mt-3">
+    Trasa do przebycia na dzień <strong>{new Date(filterDate).toLocaleDateString('pl-PL')}</strong> ma długość: <strong>{(routeDistance / 1000).toFixed(2)} km</strong>
+  </p>
+)}
         </Col>
       </Row>
-
-
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>
