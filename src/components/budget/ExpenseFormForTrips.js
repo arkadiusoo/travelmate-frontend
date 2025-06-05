@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
 import { Form, Button, Row, Col, Container, Alert } from "react-bootstrap";
 
 const mockTrips = [
@@ -63,7 +62,6 @@ const mockParticipants = [
 ];
 
 function ExpenseForm() {
-  const { tripId } = useParams();
   const [participants, setParticipants] = useState([]);
   const [customSplit, setCustomSplit] = useState(false);
   const [activeParticipants, setActiveParticipants] = useState({});
@@ -73,92 +71,79 @@ function ExpenseForm() {
     amount: "",
     payer: "",
     description: "",
-    tripId: tripId || "",
+    tripId: "",
   });
   const [error, setError] = useState("");
   const [trips, setTrips] = useState(mockTrips);
 
-  // Helper function to fetch participants for a given tripId
-  const fetchParticipants = (tid) => {
-    fetch(`http://localhost:8081/api/trips/${tid}/participants`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setParticipants(data);
-        const initialActive = {};
-        const initialShares = {};
-        data.forEach((participant) => {
-          initialActive[participant.email] = true;
-        });
-        const shareValue = data.length > 0 ? 100 / data.length : 0;
-        data.forEach((participant) => {
-          initialShares[participant.email] = shareValue;
-        });
-        setActiveParticipants(initialActive);
-        setShares(initialShares);
-      })
-      .catch((error) => {
-        console.error("Error fetching participants:", error);
-        // fallback to mockParticipants filtered by tid
-        const filtered = mockParticipants.filter(
-          (participant) => participant.tripId === tid
-        );
-        setParticipants(filtered);
-        const initialActive = {};
-        const initialShares = {};
-        filtered.forEach((participant) => {
-          initialActive[participant.email] = true;
-        });
-        const shareValue = filtered.length > 0 ? 100 / filtered.length : 0;
-        filtered.forEach((participant) => {
-          initialShares[participant.email] = shareValue;
-        });
-        setActiveParticipants(initialActive);
-        setShares(initialShares);
-      });
-  };
-
   useEffect(() => {
-    if (tripId) {
-      // If opened from /trips/:tripId, set tripId and fetch participants
-      setFormData((prev) => ({
-        ...prev,
-        tripId: tripId,
-      }));
-      fetchParticipants(tripId);
-    } else {
-      // If opened from /budget, fetch trips for user
-      const userEmail = localStorage.getItem("userEmail");
-      if (userEmail) {
-        console.log("Fetching trips for user:", userEmail);
-        fetch(`http://localhost:8081/api/trips/${userEmail}`)
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-          })
-          .then((data) => setTrips(data))
-          .catch((error) => {
-            console.log("Caught error:", error);
-            console.error("Error fetching trips:", error);
-            setTrips(mockTrips);
-          });
-      }
-      if (formData.tripId) {
-        fetchParticipants(formData.tripId);
-      } else {
-        setParticipants([]);
-        setActiveParticipants({});
-        setShares({});
-      }
+    const userEmail = localStorage.getItem("userEmail");
+    if (userEmail) {
+      console.log("Fetching trips for user:", userEmail);
+      fetch(`http://localhost:8081/api/trips/${userEmail}`)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => setTrips(data))
+        .catch((error) => {
+          console.log("Caught error:", error);
+          console.error("Error fetching trips:", error);
+          setTrips(mockTrips);
+        });
     }
-    // eslint-disable-next-line
-  }, [tripId, formData.tripId]);
+
+    if (formData.tripId) {
+      fetch(`http://localhost:8081/api/trips/${formData.tripId}/participants`)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          setParticipants(data);
+          const initialActive = {};
+          const initialShares = {};
+          data.forEach((participant) => {
+            initialActive[participant.email] = true;
+          });
+          const shareValue = data.length > 0 ? 100 / data.length : 0;
+          data.forEach((participant) => {
+            initialShares[participant.email] = shareValue;
+          });
+          setActiveParticipants(initialActive);
+          setShares(initialShares);
+        })
+        .catch((error) => {
+          console.error("Error fetching participants:", error);
+          setParticipants(mockParticipants);
+          const initialActive = {};
+          const initialShares = {};
+          mockParticipants.forEach((participant) => {
+            initialActive[participant.email] = true;
+          });
+          const filteredParticipants = participants.filter(
+            (participant) => participant.tripId === formData.tripId
+          );
+          const shareValue =
+            filteredParticipants.length > 0
+              ? 100 / filteredParticipants.length
+              : 0;
+          filteredParticipants.forEach((participant) => {
+            initialShares[participant.email] = shareValue;
+          });
+          setActiveParticipants(initialActive);
+          setShares(initialShares);
+        });
+    } else {
+      setParticipants([]);
+      setActiveParticipants({});
+      setShares({});
+    }
+  }, [formData.tripId]);
 
   const updateAutoShares = (updatedParticipants) => {
     const active = Object.entries(updatedParticipants)
@@ -223,10 +208,10 @@ function ExpenseForm() {
   };
 
   const handleTripChange = (event) => {
-    setFormData((prev) => ({
-      ...prev,
+    setFormData({
+      ...formData,
       tripId: event.target.value,
-    }));
+    });
   };
 
   const handleSubmit = (e) => {
@@ -258,9 +243,6 @@ function ExpenseForm() {
     });
   };
 
-  // Is form opened from /trips/:tripId?
-  const isTripPage = !!tripId;
-
   return (
     <Form onSubmit={handleSubmit}>
       <Container fluid>
@@ -268,33 +250,20 @@ function ExpenseForm() {
           <Col md={6}>
             <Form.Group className="mb-3">
               <Form.Label>Wybierz wycieczkę</Form.Label>
-              {isTripPage ? (
-                <Form.Control
-                  as="select"
-                  disabled
-                  value={formData.tripId}
-                >
-                  <option>
-                    {trips.find((t) => t.id === formData.tripId)?.name ||
-                      "Wycieczka"}
-                  </option>
-                </Form.Control>
-              ) : (
-                <Form.Control
-                  as="select"
-                  name="tripId"
-                  value={formData.tripId}
-                  onChange={handleTripChange}
-                >
-                  <option value="">Wybierz wycieczkę</option>
-                  {Array.isArray(trips) &&
-                    trips.map((trip) => (
-                      <option key={trip.id} value={trip.id}>
-                        {trip.name}
-                      </option>
-                    ))}
-                </Form.Control>
-              )}
+              <Form.Control
+                as="select"
+                name="tripId"
+                value={formData.tripId}
+                onChange={handleTripChange}
+              >
+                <option value="">Wybierz wycieczkę</option>
+                {Array.isArray(trips) &&
+                  trips.map((trip) => (
+                    <option key={trip.id} value={trip.id}>
+                      {trip.name}
+                    </option>
+                  ))}
+              </Form.Control>
             </Form.Group>
 
             {error && <Alert variant="danger">{error}</Alert>}
