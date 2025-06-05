@@ -35,10 +35,17 @@ function ExpenseForm() {
   useEffect(() => {
     const userEmail = localStorage.getItem("userEmail");
     if (userEmail) {
+      console.log("Fetching trips for user:", userEmail);
       fetch(`http://localhost:8081/api/trips/${userEmail}`)
-        .then((response) => response.json())
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
         .then((data) => setTrips(data)) // Set real trip data here
         .catch((error) => {
+          console.log("Caught error:", error);
           console.error("Error fetching trips:", error);
           setTrips(mockTrips); // Fallback to mock data on error
         });
