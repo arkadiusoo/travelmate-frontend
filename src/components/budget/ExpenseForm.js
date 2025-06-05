@@ -44,6 +44,14 @@ const mockParticipants = [
     status: "PENDING",
   },
   {
+    id: "d4a8e0a2-345b-4c99-99ab-bc3f2b97cd1af",
+    tripId: "c8d408ff-5906-4c63-bc8a-27a3ac0aa8f4",
+    email: "kasia@example.com",
+    name: "Kasia W",
+    role: "MEMBER",
+    status: "PENDING",
+  },
+  {
     id: "e5a8e0a2-345b-4c99-99ab-bc3f2b97cd1f",
     tripId: "d9e508ff-6906-4c63-bc8a-27a3ac0aa8f5",
     email: "darek@example.com",
@@ -110,7 +118,6 @@ function ExpenseForm() {
           setShares(initialShares);
         })
         .catch((error) => {
-          console.log("Caught error fetching participants:", error);
           console.error("Error fetching participants:", error);
           setParticipants(mockParticipants);
           const initialActive = {};
@@ -118,9 +125,14 @@ function ExpenseForm() {
           mockParticipants.forEach((participant) => {
             initialActive[participant.email] = true;
           });
+          const filteredParticipants = participants.filter(
+            (participant) => participant.tripId === formData.tripId
+          );
           const shareValue =
-            mockParticipants.length > 0 ? 100 / mockParticipants.length : 0;
-          mockParticipants.forEach((participant) => {
+            filteredParticipants.length > 0
+              ? 100 / filteredParticipants.length
+              : 0;
+          filteredParticipants.forEach((participant) => {
             initialShares[participant.email] = shareValue;
           });
           setActiveParticipants(initialActive);
@@ -138,13 +150,21 @@ function ExpenseForm() {
       .filter(([_, isActive]) => isActive)
       .map(([email]) => email);
 
-    const newShare = active.length > 0 ? 100 / active.length : 0;
+    // Filtrowanie uczestników na podstawie tripId
+    const filteredParticipants = participants.filter(
+      (participant) => participant.tripId === formData.tripId
+    );
+
+    const newShare =
+      filteredParticipants.length > 0 ? 100 / filteredParticipants.length : 0;
     const newShares = { ...shares };
-    participants.forEach((participant) => {
+
+    filteredParticipants.forEach((participant) => {
       newShares[participant.email] = active.includes(participant.email)
         ? newShare
         : 0;
     });
+
     setShares(newShares);
   };
 
