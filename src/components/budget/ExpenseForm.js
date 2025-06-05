@@ -1,37 +1,73 @@
 import React, { useState, useEffect } from "react";
 import { Form, Button, Row, Col, Container, Alert } from "react-bootstrap";
 
-const allParticipants = ["Adam", "Ola", "Bartek", "Kasia", "Darek"];
-
-// Mock Data for Trips
 const mockTrips = [
-  { id: 1, name: "Wycieczka do Zakopanego" },
-  { id: 2, name: "Weekend w Gdańsku" },
-  { id: 3, name: "Wyprawa na Mazury" },
+  {
+    id: "b7c308ff-4906-4c63-bc8a-27a3ac0aa8f3",
+    name: "Wycieczka do Zakopanego",
+  },
+  { id: "c8d408ff-5906-4c63-bc8a-27a3ac0aa8f4", name: "Weekend w Gdańsku" },
+  { id: "d9e508ff-6906-4c63-bc8a-27a3ac0aa8f5", name: "Wyprawa na Mazury" },
+];
+
+const mockParticipants = [
+  {
+    id: "f1a8e0a2-345b-4c99-99ab-bc3f2b97cd1f",
+    tripId: "b7c308ff-4906-4c63-bc8a-27a3ac0aa8f3",
+    email: "adam@example.com",
+    name: "Adam",
+    role: "MEMBER",
+    status: "PENDING",
+  },
+  {
+    id: "b2a8e0a2-345b-4c99-99ab-bc3f2b97cd1f",
+    tripId: "b7c308ff-4906-4c63-bc8a-27a3ac0aa8f3",
+    email: "ola@example.com",
+    name: "Ola",
+    role: "MEMBER",
+    status: "PENDING",
+  },
+  {
+    id: "c3a8e0a2-345b-4c99-99ab-bc3f2b97cd1f",
+    tripId: "c8d408ff-5906-4c63-bc8a-27a3ac0aa8f4",
+    email: "bartek@example.com",
+    name: "Bartek",
+    role: "MEMBER",
+    status: "PENDING",
+  },
+  {
+    id: "d4a8e0a2-345b-4c99-99ab-bc3f2b97cd1f",
+    tripId: "c8d408ff-5906-4c63-bc8a-27a3ac0aa8f4",
+    email: "kasia@example.com",
+    name: "Kasia",
+    role: "MEMBER",
+    status: "PENDING",
+  },
+  {
+    id: "e5a8e0a2-345b-4c99-99ab-bc3f2b97cd1f",
+    tripId: "d9e508ff-6906-4c63-bc8a-27a3ac0aa8f5",
+    email: "darek@example.com",
+    name: "Darek",
+    role: "MEMBER",
+    status: "PENDING",
+  },
 ];
 
 function ExpenseForm() {
+  const [participants, setParticipants] = useState([]);
   const [customSplit, setCustomSplit] = useState(false);
-  const [activeParticipants, setActiveParticipants] = useState(
-    Object.fromEntries(allParticipants.map((name) => [name, true]))
-  );
-  const [shares, setShares] = useState(() => {
-    const defaultShare = 100 / allParticipants.length;
-    return Object.fromEntries(
-      allParticipants.map((name) => [name, defaultShare])
-    );
-  });
+  const [activeParticipants, setActiveParticipants] = useState({});
+  const [shares, setShares] = useState({});
   const [formData, setFormData] = useState({
     title: "",
     amount: "",
     payer: "",
     description: "",
-    tripId: "", // Added for the trip selection
+    tripId: "",
   });
   const [error, setError] = useState("");
-  const [trips, setTrips] = useState(mockTrips); // Initially set mock data for trips
+  const [trips, setTrips] = useState(mockTrips);
 
-  // Simulate fetching trips from the backend
   useEffect(() => {
     const userEmail = localStorage.getItem("userEmail");
     if (userEmail) {
@@ -43,53 +79,100 @@ function ExpenseForm() {
           }
           return response.json();
         })
-        .then((data) => setTrips(data)) // Set real trip data here
+        .then((data) => setTrips(data))
         .catch((error) => {
           console.log("Caught error:", error);
           console.error("Error fetching trips:", error);
-          setTrips(mockTrips); // Fallback to mock data on error
+          setTrips(mockTrips);
         });
     }
-  }, []);
+
+    if (formData.tripId) {
+      fetch(`http://localhost:8081/api/trips/${formData.tripId}/participants`)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          setParticipants(data);
+          const initialActive = {};
+          const initialShares = {};
+          data.forEach((participant) => {
+            initialActive[participant.email] = true;
+          });
+          const shareValue = data.length > 0 ? 100 / data.length : 0;
+          data.forEach((participant) => {
+            initialShares[participant.email] = shareValue;
+          });
+          setActiveParticipants(initialActive);
+          setShares(initialShares);
+        })
+        .catch((error) => {
+          console.log("Caught error fetching participants:", error);
+          console.error("Error fetching participants:", error);
+          setParticipants(mockParticipants);
+          const initialActive = {};
+          const initialShares = {};
+          mockParticipants.forEach((participant) => {
+            initialActive[participant.email] = true;
+          });
+          const shareValue =
+            mockParticipants.length > 0 ? 100 / mockParticipants.length : 0;
+          mockParticipants.forEach((participant) => {
+            initialShares[participant.email] = shareValue;
+          });
+          setActiveParticipants(initialActive);
+          setShares(initialShares);
+        });
+    } else {
+      setParticipants([]);
+      setActiveParticipants({});
+      setShares({});
+    }
+  }, [formData.tripId]);
 
   const updateAutoShares = (updatedParticipants) => {
     const active = Object.entries(updatedParticipants)
       .filter(([_, isActive]) => isActive)
-      .map(([name]) => name);
+      .map(([email]) => email);
 
     const newShare = active.length > 0 ? 100 / active.length : 0;
     const newShares = { ...shares };
-    allParticipants.forEach((name) => {
-      newShares[name] = active.includes(name) ? newShare : 0;
+    participants.forEach((participant) => {
+      newShares[participant.email] = active.includes(participant.email)
+        ? newShare
+        : 0;
     });
     setShares(newShares);
   };
 
-  const handleToggleParticipant = (name) => {
+  const handleToggleParticipant = (email) => {
     const updated = {
       ...activeParticipants,
-      [name]: !activeParticipants[name],
+      [email]: !activeParticipants[email],
     };
     setActiveParticipants(updated);
 
     if (!customSplit) {
       updateAutoShares(updated);
     } else {
-      setShares((prev) => ({ ...prev, [name]: 0 }));
+      setShares((prev) => ({ ...prev, [email]: 0 }));
     }
   };
 
-  const handleShareChange = (name, value) => {
+  const handleShareChange = (email, value) => {
     const numericValue = parseFloat(value) || 0;
     const updatedActive = { ...activeParticipants };
 
     if (numericValue === 0) {
-      updatedActive[name] = false;
+      updatedActive[email] = false;
     } else {
-      updatedActive[name] = true;
+      updatedActive[email] = true;
     }
     setActiveParticipants(updatedActive);
-    setShares((prev) => ({ ...prev, [name]: numericValue }));
+    setShares((prev) => ({ ...prev, [email]: numericValue }));
   };
 
   const handleCustomSplitToggle = () => {
@@ -124,7 +207,7 @@ function ExpenseForm() {
     }
 
     const totalShare = Object.entries(shares)
-      .filter(([name]) => activeParticipants[name])
+      .filter(([email]) => activeParticipants[email])
       .reduce((sum, [_, val]) => sum + val, 0);
 
     if (Math.round(totalShare) !== 100) {
@@ -135,7 +218,7 @@ function ExpenseForm() {
     console.log("Dane wydatku:", {
       ...formData,
       shares: Object.fromEntries(
-        Object.entries(shares).filter(([name]) => activeParticipants[name])
+        Object.entries(shares).filter(([email]) => activeParticipants[email])
       ),
     });
   };
@@ -145,7 +228,6 @@ function ExpenseForm() {
       <Container fluid>
         <Row>
           <Col md={6}>
-            {/* Trip selection */}
             <Form.Group className="mb-3">
               <Form.Label>Wybierz wycieczkę</Form.Label>
               <Form.Control
@@ -222,29 +304,47 @@ function ExpenseForm() {
                 label="Własny podział kosztów"
                 checked={customSplit}
                 onChange={handleCustomSplitToggle}
-                className="mb-3"
+                className="mt-3"
               />
-              {allParticipants.map((name) => (
-                <Row key={name} className="align-items-center mb-2">
-                  <Col xs={1}>
-                    <Form.Check
-                      type="checkbox"
-                      checked={activeParticipants[name]}
-                      onChange={() => handleToggleParticipant(name)}
-                    />
-                  </Col>
-                  <Col>{name}</Col>
-                  <Col>
-                    <Form.Control
-                      type="number"
-                      value={shares[name].toFixed(2)}
-                      disabled={!customSplit || !activeParticipants[name]}
-                      onChange={(e) => handleShareChange(name, e.target.value)}
-                    />
-                  </Col>
-                  <Col>%</Col>
-                </Row>
-              ))}
+              <div>
+                {participants
+                  .filter(
+                    (participant) => participant.tripId === formData.tripId
+                  )
+                  .map((participant) => (
+                    <Row
+                      key={participant.id}
+                      className="align-items-center mb-2"
+                    >
+                      <Col xs={1}>
+                        <Form.Check
+                          type="checkbox"
+                          checked={
+                            activeParticipants[participant.email] || false
+                          }
+                          onChange={() =>
+                            handleToggleParticipant(participant.email)
+                          }
+                        />
+                      </Col>
+                      <Col>{participant.name}</Col>
+                      <Col>
+                        <Form.Control
+                          type="number"
+                          value={shares[participant.email]?.toFixed(2) || 0}
+                          disabled={
+                            !customSplit ||
+                            !activeParticipants[participant.email]
+                          }
+                          onChange={(e) =>
+                            handleShareChange(participant.email, e.target.value)
+                          }
+                        />
+                      </Col>
+                      <Col>%</Col>
+                    </Row>
+                  ))}
+              </div>
             </Form.Group>
           </Col>
         </Row>
