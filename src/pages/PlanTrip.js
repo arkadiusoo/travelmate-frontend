@@ -25,6 +25,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import MainLayout from "../layouts/MainLayout";
 import ExpenseFormForTrips from "../components/budget/ExpenseFormForTrips";
+import WideModalWrapper from "../components/WideModalWrapper";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -314,6 +315,17 @@ export default function PlanTrip() {
   return (
     <MainLayout>
       <h1 className="mb-4 text-center">{tripName}</h1>
+      <Row className="mb-3">
+        <Col md={12} className="text-end">
+          <Button
+            variant="primary"
+            className="w-100"
+            onClick={() => setShowModal(true)}
+          >
+            ➕ Dodaj wydatek
+          </Button>
+        </Col>
+      </Row>
       <Row className="align-items-center mb-3">
         <Col md={5} className="mt-3">
           <Form.Group className="mb-3">
@@ -625,6 +637,13 @@ export default function PlanTrip() {
           </Button>
         </Modal.Footer>
       </Modal>
+      <WideModalWrapper
+        show={showModal}
+        onClose={() => setShowModal(false)}
+        title="Dodaj wydatek"
+      >
+        <ExpenseFormForTrips />
+      </WideModalWrapper>
     </MainLayout>
   );
 }
