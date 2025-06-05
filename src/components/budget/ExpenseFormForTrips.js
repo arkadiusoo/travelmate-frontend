@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Form, Button, Row, Col, Container, Alert } from "react-bootstrap";
+import { useParams } from "react-router-dom";
 
 const mockTrips = [
   {
@@ -62,6 +63,7 @@ const mockParticipants = [
 ];
 
 function ExpenseForm() {
+  const { tripId } = useParams();
   const [participants, setParticipants] = useState([]);
   const [customSplit, setCustomSplit] = useState(false);
   const [activeParticipants, setActiveParticipants] = useState({});
@@ -71,10 +73,27 @@ function ExpenseForm() {
     amount: "",
     payer: "",
     description: "",
-    tripId: "",
+    tripId: tripId || "",
   });
   const [error, setError] = useState("");
   const [trips, setTrips] = useState(mockTrips);
+
+  useEffect(() => {
+    if (tripId) {
+      fetch(`http://localhost:8081/api/trips/${tripId}/participants`)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => setTrips([data]))
+        .catch((error) => {
+          console.log("Caught error:", error);
+          setTrips(mockTrips);
+        });
+    }
+  }, [tripId]);
 
   useEffect(() => {
     const userEmail = localStorage.getItem("userEmail");
@@ -255,14 +274,11 @@ function ExpenseForm() {
                 name="tripId"
                 value={formData.tripId}
                 onChange={handleTripChange}
+                disabled
               >
-                <option value="">Wybierz wycieczkę</option>
-                {Array.isArray(trips) &&
-                  trips.map((trip) => (
-                    <option key={trip.id} value={trip.id}>
-                      {trip.name}
-                    </option>
-                  ))}
+                <option value="">
+                  {trips.length > 0 ? trips[0].name : "Wybierz wycieczkę"}
+                </option>
               </Form.Control>
             </Form.Group>
 
