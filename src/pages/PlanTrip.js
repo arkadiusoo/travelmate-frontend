@@ -68,6 +68,7 @@ export default function PlanTrip() {
   const [tripName, setTripName] = useState("");
   const [points, setPoints] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [form, setForm] = useState({ title: "", date: "", description: "" });
   const [position, setPosition] = useState(null);
   const [loadingName, setLoadingName] = useState(false);
@@ -264,6 +265,9 @@ export default function PlanTrip() {
       .then(() => setPoints((prev) => prev.filter((p) => p.id !== id)))
       .catch(console.error);
   };
+  const handleAddExpense = () => {
+    setShowExpenseModal(true);
+  };
 
   const dates = [...new Set(points.map((p) => p.date))];
   const displayPoints = points.filter(
@@ -320,7 +324,7 @@ export default function PlanTrip() {
           <Button
             variant="primary"
             className="w-100"
-            onClick={() => setShowModal(true)}
+            onClick={handleAddExpense}
           >
             ➕ Dodaj wydatek
           </Button>
@@ -638,8 +642,8 @@ export default function PlanTrip() {
         </Modal.Footer>
       </Modal>
       <WideModalWrapper
-        show={showModal}
-        onClose={() => setShowModal(false)}
+        show={showExpenseModal}
+        onClose={() => setShowExpenseModal(false)}
         title="Dodaj wydatek"
       >
         <ExpenseFormForTrips />
