@@ -62,8 +62,9 @@ const mockParticipants = [
   },
 ];
 
-function ExpenseForm() {
-  const { tripId } = useParams();
+function ExpenseFormForTrips({ tripId }) {
+  // const { tripId } = useParams();
+  console.log("Trip ID from URL:", tripId);
   const [participants, setParticipants] = useState([]);
   const [customSplit, setCustomSplit] = useState(false);
   const [activeParticipants, setActiveParticipants] = useState({});
@@ -98,8 +99,8 @@ function ExpenseForm() {
   useEffect(() => {
     const userEmail = localStorage.getItem("userEmail");
     if (userEmail) {
-      console.log("Fetching trips for user:", userEmail);
-      fetch(`http://localhost:8081/api/trips/${userEmail}`)
+      console.log("Fetching data for trip:", tripId);
+      fetch(`http://localhost:8081/api/trips/${tripId}`)
         .then((response) => {
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -389,4 +390,4 @@ function ExpenseForm() {
   );
 }
 
-export default ExpenseForm;
+export default ExpenseFormForTrips;

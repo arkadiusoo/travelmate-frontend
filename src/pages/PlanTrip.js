@@ -265,7 +265,7 @@ export default function PlanTrip() {
       .then(() => setPoints((prev) => prev.filter((p) => p.id !== id)))
       .catch(console.error);
   };
-  const handleAddExpense = () => {
+  const handleAddExpense = (tripId) => {
     setShowExpenseModal(true);
   };
 
@@ -324,7 +324,7 @@ export default function PlanTrip() {
           <Button
             variant="primary"
             className="w-100"
-            onClick={handleAddExpense}
+            onClick={() => handleAddExpense(tripId)}
           >
             ➕ Dodaj wydatek
           </Button>
@@ -646,7 +646,7 @@ export default function PlanTrip() {
         onClose={() => setShowExpenseModal(false)}
         title="Dodaj wydatek"
       >
-        <ExpenseFormForTrips />
+        <ExpenseFormForTrips tripId={tripId} />
       </WideModalWrapper>
     </MainLayout>
   );
