@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Button,
   Card,
@@ -270,9 +270,9 @@ export default function PlanTrip() {
   };
 
   const dates = [...new Set(points.map((p) => p.date))];
-  const displayPoints = points.filter(
-    (p) => !filterDate || p.date === filterDate
-  );
+  const displayPoints = useMemo(() => {
+    return points.filter((p) => !filterDate || p.date === filterDate);
+  }, [points, filterDate]);
 
   useEffect(() => {
     if (!filterDate || displayPoints.length < 2) {
