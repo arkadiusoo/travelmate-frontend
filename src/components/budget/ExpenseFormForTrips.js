@@ -266,10 +266,6 @@ function ExpenseFormForTrips({ tripId_fromProps }) {
 
   return (
     <Form onSubmit={handleSubmit}>
-      <alert className="text-center mb-3">
-        <strong>Uwaga w expense: {tripId}</strong> Dodawanie wydatków jest
-        dostępne tylko dla właściciela wycieczki.
-      </alert>
       <Container fluid>
         <Row>
           <Col md={6}>
@@ -283,7 +279,7 @@ function ExpenseFormForTrips({ tripId_fromProps }) {
                 disabled
               >
                 <option value="">
-                  {trips.length > 0 ? trips[0].name : "Wybierz wycieczkę"}
+                  {trips && trips.name ? trips.name : "Wybierz wycieczkę"}
                 </option>
               </Form.Control>
             </Form.Group>
