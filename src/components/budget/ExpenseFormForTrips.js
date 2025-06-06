@@ -62,9 +62,10 @@ const mockParticipants = [
   },
 ];
 
-function ExpenseFormForTrips({ tripId }) {
+function ExpenseFormForTrips({ tripId_fromProps }) {
+  const tripId = tripId_fromProps; // Use tripId from props or URL params
   // const { tripId } = useParams();
-  console.log("Trip ID from URL:", tripId);
+  // console.log("Trip ID from URL:", tripId);
   const [participants, setParticipants] = useState([]);
   const [customSplit, setCustomSplit] = useState(false);
   const [activeParticipants, setActiveParticipants] = useState({});
@@ -74,7 +75,7 @@ function ExpenseFormForTrips({ tripId }) {
     amount: "",
     payer: "",
     description: "",
-    tripId: tripId || "",
+    tripId: tripId_fromProps || "",
   });
   const [error, setError] = useState("");
   const [trips, setTrips] = useState(mockTrips);
@@ -265,6 +266,10 @@ function ExpenseFormForTrips({ tripId }) {
 
   return (
     <Form onSubmit={handleSubmit}>
+      <alert className="text-center mb-3">
+        <strong>Uwaga w expense: {tripId}</strong> Dodawanie wydatków jest
+        dostępne tylko dla właściciela wycieczki.
+      </alert>
       <Container fluid>
         <Row>
           <Col md={6}>

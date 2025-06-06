@@ -646,7 +646,7 @@ export default function PlanTrip() {
         onClose={() => setShowExpenseModal(false)}
         title="Dodaj wydatek"
       >
-        <ExpenseFormForTrips tripId={tripId} />
+        <ExpenseFormForTrips tripId_fromProps={tripId} />
       </WideModalWrapper>
     </MainLayout>
   );
