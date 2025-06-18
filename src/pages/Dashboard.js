@@ -21,7 +21,7 @@ function Dashboard() {
       return nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
     }
 
-    return "Usuario"; // Final fallback
+    return "User"; // Final fallback
   };
 
   const handleLogout = () => {

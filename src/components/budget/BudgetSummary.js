@@ -1,63 +1,204 @@
-import React from "react";
-import { ListGroup, Badge } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { ListGroup, Badge, Spinner, Alert } from "react-bootstrap";
+import { useAuth } from "../../contexts/AuthContext";
 
-const participantNames = {
-  "33333333-3333-3333-3333-333333333333": "Adam",
-  "22222222-2222-2222-2222-222222222222": "Ola",
-  "dddddddd-dddd-dddd-dddd-dddddddddddd": "Darek",
-  "cccccccc-cccc-cccc-cccc-cccccccccccc": "Kasia",
-  "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb": "Bartek",
-};
+function BudgetSummary({ tripId }) {
+    const [budgetSummary, setBudgetSummary] = useState(null);
+    const [participants, setParticipants] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const { token } = useAuth();
+    const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
 
-const data = {
-  totalTripCost: 680.0,
-  participantShare: {
-    "33333333-3333-3333-3333-333333333333": 75.0,
-    "22222222-2222-2222-2222-222222222222": 75.0,
-    "dddddddd-dddd-dddd-dddd-dddddddddddd": 175.0,
-    "cccccccc-cccc-cccc-cccc-cccccccccccc": 177.5,
-    "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb": 177.5,
-  },
-  actualPaid: {
-    "22222222-2222-2222-2222-222222222222": 150.0,
-    "cccccccc-cccc-cccc-cccc-cccccccccccc": 350.0,
-    "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb": 180.0,
-  },
-  balance: {
-    "33333333-3333-3333-3333-333333333333": -75.0,
-    "22222222-2222-2222-2222-222222222222": 75.0,
-    "dddddddd-dddd-dddd-dddd-dddddddddddd": -175.0,
-    "cccccccc-cccc-cccc-cccc-cccccccccccc": 172.5,
-    "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb": 2.5,
-  },
-};
+    const getAuthHeaders = () => ({
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+    });
 
-function BudgetSummary() {
-  return (
-    <>
-      <h5 className="text-center mb-3">Podsumowanie</h5>
-      <ListGroup className="mb-3">
-        <ListGroup.Item>
-          <strong>Całkowity koszt podróży:</strong>{" "}
-          {data.totalTripCost.toFixed(2)} zł
-        </ListGroup.Item>
-      </ListGroup>
+    const getParticipantName = (userId) => {
+        const participant = participants.find(p => p.userId === userId);
+        if (participant) {
+            // Now we have firstName and lastName from the enhanced DTO
+            if (participant.firstName && participant.lastName) {
+                return `${participant.firstName} ${participant.lastName}`.trim();
+            }
 
-      <h6>Rozliczenia indywidualne:</h6>
-      <ListGroup>
-        {Object.entries(data.balance).map(([id, amount]) => (
-          <ListGroup.Item key={id} className="d-flex justify-content-between">
-            <span>{participantNames[id] || id}</span>
-            <Badge bg={amount >= 0 ? "success" : "danger"}>
-              {amount >= 0
-                ? `+${amount.toFixed(2)} zł`
-                : `${amount.toFixed(2)} zł`}
-            </Badge>
-          </ListGroup.Item>
-        ))}
-      </ListGroup>
-    </>
-  );
+            if (participant.firstName) {
+                return participant.firstName;
+            }
+
+            if (participant.email) {
+                return participant.email.split('@')[0];
+            }
+        }
+        return userId?.toString()?.substring(0, 8) || 'Unknown';
+    };
+
+    // Fetch participants and budget summary
+    useEffect(() => {
+        if (!tripId || !token) {
+            setBudgetSummary(null);
+            setParticipants([]);
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        // Fetch both participants and budget summary
+        Promise.all([
+            fetch(`${API_BASE}/trips/${tripId}/participants`, {
+                headers: getAuthHeaders()
+            }),
+            fetch(`${API_BASE}/trips/${tripId}/expenses/budget-summary`, {
+                headers: getAuthHeaders()
+            })
+        ])
+            .then(async ([participantsRes, budgetRes]) => {
+                // Handle participants response
+                if (participantsRes.ok) {
+                    const participantsData = await participantsRes.json();
+                    setParticipants(participantsData || []);
+                } else {
+                    console.warn('Failed to fetch participants:', participantsRes.status);
+                    setParticipants([]);
+                }
+
+                // Handle budget response
+                if (budgetRes.ok) {
+                    const budgetData = await budgetRes.json();
+                    setBudgetSummary(budgetData);
+                } else if (budgetRes.status === 404) {
+                    // No expenses yet
+                    setBudgetSummary({
+                        totalTripCost: 0,
+                        participantShare: {},
+                        actualPaid: {},
+                        balance: {}
+                    });
+                } else {
+                    throw new Error(`HTTP ${budgetRes.status}: Failed to fetch budget summary`);
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching budget data:', err);
+                setError('Błąd ładowania podsumowania budżetu: ' + err.message);
+            })
+            .finally(() => setLoading(false));
+    }, [tripId, token]);
+
+    if (!tripId) {
+        return (
+            <div className="text-center text-muted">
+                <p>Wybierz wycieczkę aby zobaczyć budżet</p>
+            </div>
+        );
+    }
+
+    if (loading) {
+        return (
+            <div className="text-center">
+                <Spinner animation="border" size="sm" />
+                <p className="mt-2 small">Ładowanie budżetu...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return <Alert variant="danger" className="mb-0">{error}</Alert>;
+    }
+
+    if (!budgetSummary || (budgetSummary.totalTripCost === 0 && Object.keys(budgetSummary.balance || {}).length === 0)) {
+        return (
+            <div className="text-center text-muted">
+                <p>Brak wydatków</p>
+                <small>Dodaj pierwszy wydatek aby zobaczyć podsumowanie budżetu</small>
+            </div>
+        );
+    }
+
+    return (
+        <>
+            <h6 className="text-center mb-3">Podsumowanie</h6>
+
+            <ListGroup className="mb-3">
+                <ListGroup.Item>
+                    <strong>Całkowity koszt podróży:</strong>{" "}
+                    <span className="float-end">
+            {budgetSummary.totalTripCost?.toFixed(2) || '0.00'} zł
+          </span>
+                </ListGroup.Item>
+            </ListGroup>
+
+            {budgetSummary.balance && Object.keys(budgetSummary.balance).length > 0 && (
+                <>
+                    <h6>Rozliczenia indywidualne:</h6>
+                    <ListGroup className="mb-3">
+                        {Object.entries(budgetSummary.balance)
+                            .sort(([,a], [,b]) => b - a)
+                            .map(([userId, balance]) => (
+                                <ListGroup.Item key={userId} className="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div><strong>{getParticipantName(userId)}</strong></div>
+                                        <small className="text-muted">
+                                            Należy się: {budgetSummary.participantShare?.[userId]?.toFixed(2) || '0.00'} zł |
+                                            Zapłacił: {budgetSummary.actualPaid?.[userId]?.toFixed(2) || '0.00'} zł
+                                        </small>
+                                    </div>
+                                    <Badge bg={balance >= 0 ? "success" : "danger"}>
+                                        {balance >= 0
+                                            ? `+${balance.toFixed(2)} zł`
+                                            : `${balance.toFixed(2)} zł`}
+                                    </Badge>
+                                </ListGroup.Item>
+                            ))}
+                    </ListGroup>
+                </>
+            )}
+
+            {/* Detailed breakdown if there are multiple participants */}
+            {budgetSummary.participantShare && Object.keys(budgetSummary.participantShare).length > 1 && (
+                <>
+                    <h6 className="mt-4">Szczegółowe rozliczenie:</h6>
+                    <ListGroup className="mb-3">
+                        {Object.entries(budgetSummary.participantShare).map(([userId, shareAmount]) => {
+                            const paidAmount = budgetSummary.actualPaid?.[userId] || 0;
+                            const balanceAmount = budgetSummary.balance?.[userId] || 0;
+
+                            return (
+                                <ListGroup.Item key={userId}>
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        <strong>{getParticipantName(userId)}</strong>
+                                        <Badge bg={balanceAmount >= 0 ? "success" : "danger"}>
+                                            {balanceAmount >= 0 ? "Do zwrotu" : "Do dopłaty"}
+                                        </Badge>
+                                    </div>
+                                    <div className="small text-muted mt-1">
+                                        <div>Powinien zapłacić: <strong>{shareAmount.toFixed(2)} zł</strong></div>
+                                        <div>Rzeczywiście zapłacił: <strong>{paidAmount.toFixed(2)} zł</strong></div>
+                                        <div className={balanceAmount >= 0 ? "text-success" : "text-danger"}>
+                                            Bilans: <strong>{balanceAmount >= 0 ? '+' : ''}{balanceAmount.toFixed(2)} zł</strong>
+                                        </div>
+                                    </div>
+                                </ListGroup.Item>
+                            );
+                        })}
+                    </ListGroup>
+                </>
+            )}
+
+            <div className="mt-3 p-2 bg-light rounded small">
+                <div className="d-flex justify-content-between">
+                    <span>Całkowity koszt:</span>
+                    <span>{budgetSummary.totalTripCost?.toFixed(2) || '0.00'} zł</span>
+                </div>
+                <div className="text-muted mt-1">
+                    <div>✅ Dodatni bilans = należy się zwrot</div>
+                    <div>❌ Ujemny bilans = do dopłaty</div>
+                </div>
+            </div>
+        </>
+    );
 }
 
 export default BudgetSummary;
