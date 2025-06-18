@@ -1,49 +1,71 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
 } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ThemeProvider } from "./styles/ThemeContext";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import TripsPage from "./pages/TripsPage";
 import PlanTrip from "./pages/PlanTrip";
 import BudgetPage from "./pages/BudgetPage";
-// import ParticipantsPage from "./pages/ParticipantsPage";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+// This component handles the routing logic based on authentication
+function AppRoutes() {
+  const { isAuthenticated, loading } = useAuth();
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("isLoggedIn") === "true";
-      setIsLoggedIn(stored);
-    } catch (err) {
-      console.warn("localStorage unavailable:", err);
-    }
-  }, []);
+  // Show loading spinner while checking authentication
+  if (loading) {
+    return (
+        <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+    );
+  }
 
   return (
-    <Router>
       <Routes>
-        {!isLoggedIn ? (
-          <Route
-            path="*"
-            element={<Home onLogin={() => setIsLoggedIn(true)} />}
-          />
+        {!isAuthenticated ? (
+            // Not logged in - show Home page for all routes
+            <Route
+                path="*"
+                element={<Home />}
+            />
         ) : (
-          <>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/trips" element={<TripsPage />} />
-            <Route path="/trips/:id" element={<PlanTrip />} />
-            <Route path="/budget" element={<BudgetPage />} />
-            {/* <Route path="/participants" element={<ParticipantsPage />} /> */}
-            <Route path="*" element={<Navigate to="/dashboard" />} />
-          </>
+            // Logged in - show protected routes
+            <>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/trips" element={<TripsPage />} />
+              <Route path="/trips/:id" element={<PlanTrip />} />
+              <Route path="/budget" element={<BudgetPage />} />
+              {/* <Route path="/participants" element={<ParticipantsPage />} /> */}
+
+              {/* Redirect root to dashboard */}
+              <Route path="/" element={<Navigate to="/dashboard" />} />
+
+              {/* Catch all other routes */}
+              <Route path="*" element={<Navigate to="/dashboard" />} />
+            </>
         )}
       </Routes>
-    </Router>
+  );
+}
+
+function App() {
+  return (
+      <AuthProvider>
+        <ThemeProvider>
+          <Router>
+            <AppRoutes />
+          </Router>
+        </ThemeProvider>
+      </AuthProvider>
   );
 }
 
