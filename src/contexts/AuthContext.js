@@ -125,6 +125,75 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // ✨ NEW: Password reset functions
+    const forgotPassword = async (email) => {
+        try {
+            const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return { success: true, message: data.message };
+            } else {
+                const errorData = await response.json();
+                return { success: false, error: errorData.message || 'Failed to send reset email' };
+            }
+        } catch (error) {
+            console.error('Forgot password error:', error);
+            return { success: false, error: 'Network error' };
+        }
+    };
+
+    const resetPassword = async (token, newPassword) => {
+        try {
+            const response = await fetch(`${API_BASE}/api/auth/reset-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ token, newPassword })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return { success: true, message: data.message };
+            } else {
+                const errorData = await response.json();
+                return { success: false, error: errorData.message || 'Failed to reset password' };
+            }
+        } catch (error) {
+            console.error('Reset password error:', error);
+            return { success: false, error: 'Network error' };
+        }
+    };
+
+    const validateResetToken = async (token) => {
+        try {
+            const response = await fetch(`${API_BASE}/api/auth/validate-reset-token?token=${encodeURIComponent(token)}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return { success: data.success, message: data.message };
+            } else {
+                const errorData = await response.json();
+                return { success: false, error: errorData.message || 'Invalid token' };
+            }
+        } catch (error) {
+            console.error('Validate token error:', error);
+            return { success: false, error: 'Network error' };
+        }
+    };
+
     const logout = () => {
         setToken(null);
         setUser(null);
@@ -157,6 +226,9 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        forgotPassword,
+        resetPassword,
+        validateResetToken,
         authenticatedFetch,
         isAuthenticated: !!token
     };

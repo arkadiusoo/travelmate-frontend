@@ -3,7 +3,7 @@ import { Form, Button, Alert } from "react-bootstrap";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 import { ThemeContext } from "../styles/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "../styles/authTransition.css";
 
 function AuthForm({ isLogin, onSwitchMode }) {
@@ -166,6 +166,19 @@ function AuthForm({ isLogin, onSwitchMode }) {
                       </Form.Text>
                   )}
                 </Form.Group>
+
+                {/* ✨ NEW: Forgot Password Link - Only show on login form */}
+                {isLogin && (
+                    <div className="d-flex justify-content-end mb-3">
+                      <Link
+                          to="/forgot-password"
+                          className={`text-decoration-none ${darkMode ? "text-light" : "text-primary"}`}
+                          style={{ fontSize: "0.9rem" }}
+                      >
+                        Zapomniałeś hasła?
+                      </Link>
+                    </div>
+                )}
 
                 <Button
                     type="submit"
