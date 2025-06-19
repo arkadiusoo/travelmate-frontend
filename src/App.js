@@ -13,8 +13,8 @@ import TripsPage from "./pages/TripsPage";
 import PlanTrip from "./pages/PlanTrip";
 import BudgetPage from "./pages/BudgetPage";
 import ParticipantsPage from './pages/ParticipantsPage';
-import ForgotPasswordForm from './components/ForgotPasswordForm';  // ✨ NEW
-import ResetPasswordForm from './components/ResetPasswordForm';    // ✨ NEW
+import ForgotPasswordForm from './components/ForgotPasswordForm';
+import ResetPasswordForm from './components/ResetPasswordForm';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 // This component handles the routing logic based on authentication
