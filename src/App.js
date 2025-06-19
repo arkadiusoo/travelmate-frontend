@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import TripsPage from "./pages/TripsPage";
 import PlanTrip from "./pages/PlanTrip";
 import BudgetPage from "./pages/BudgetPage";
+import ParticipantsPage from './pages/ParticipantsPage';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 // This component handles the routing logic based on authentication
@@ -44,6 +45,7 @@ function AppRoutes() {
               <Route path="/trips" element={<TripsPage />} />
               <Route path="/trips/:id" element={<PlanTrip />} />
               <Route path="/budget" element={<BudgetPage />} />
+                <Route path="/participants" element={<ParticipantsPage />} />
               {/* <Route path="/participants" element={<ParticipantsPage />} /> */}
 
               {/* Redirect root to dashboard */}
@@ -51,6 +53,7 @@ function AppRoutes() {
 
               {/* Catch all other routes */}
               <Route path="*" element={<Navigate to="/dashboard" />} />
+
             </>
         )}
       </Routes>
