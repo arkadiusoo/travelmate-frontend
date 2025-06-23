@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Card, Modal, Form, Spinner, InputGroup, Row, Col, ListGroup } from 'react-bootstrap';
 import { BsTrash, BsPencil, BsArrowDown } from 'react-icons/bs';
 import {
@@ -261,10 +261,13 @@ export default function PlanTrip() {
   };
 
   const dates = [...new Set(points.map(p => p.date))];
-  const displayPoints = points.filter(p => !filterDate || p.date === filterDate);
+  const displayPoints = useMemo(
+    () => points.filter(p => !filterDate || p.date === filterDate),
+    [points, filterDate]
+  );
 
   useEffect(() => {
-    if (!filterDate || displayPoints.length < 2) {
+    if (displayPoints.length < 2) {
       setRouteCoords([]);
       setRouteDistance(null);
       return;
@@ -282,7 +285,7 @@ export default function PlanTrip() {
           }
         })
         .catch(console.error);
-  }, [displayPoints, filterDate]);
+  }, [displayPoints]);
 
   useEffect(() => {
     if (!map || displayPoints.length === 0 || hasUserInteracted) return;
