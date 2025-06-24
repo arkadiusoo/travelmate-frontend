@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button, Card, Modal, Form, Spinner, InputGroup, Row, Col, ListGroup } from 'react-bootstrap';
 import { BsTrash, BsPencil, BsArrowDown } from 'react-icons/bs';
 import {
@@ -263,15 +263,23 @@ export default function PlanTrip() {
   const dates = [...new Set(points.map(p => p.date))];
   const displayPoints = points.filter(p => !filterDate || p.date === filterDate);
 
+  // previous coords
+  const previousCoordsRef = useRef('');
+
   useEffect(() => {
     if (!filterDate || displayPoints.length < 2) {
-      setRouteCoords([]);
-      setRouteDistance(null);
+      if (routeCoords.length > 0 || routeDistance !== null) {
+        setRouteCoords([]);  // reset if ther is something to reset
+        setRouteDistance(null);
+      }
       return;
     }
 
     const coords = displayPoints.map(p => `${p.position.lng},${p.position.lat}`).join(';');
-    fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`)
+
+    // check if there is any difference
+    if (coords !== previousCoordsRef.current) {
+      fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`)
         .then(res => res.json())
         .then(data => {
           if (data.routes?.length) {
@@ -282,6 +290,10 @@ export default function PlanTrip() {
           }
         })
         .catch(console.error);
+
+      // update coords
+      previousCoordsRef.current = coords;
+    }
   }, [displayPoints, filterDate]);
 
   useEffect(() => {
