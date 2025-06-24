@@ -216,7 +216,7 @@ function ParticipantsPage() {
                     .catch(err => console.error('Error refreshing trips:', err));
             }
 
-            alert(`✅ Zaproszenie zostało ${action === 'accept' ? 'zaakceptowane' : 'odrzucone'}!`);
+            alert(`Zaproszenie zostało ${action === 'accept' ? 'zaakceptowane' : 'odrzucone'}!`);
 
         } catch (error) {
             console.error(`❌ Error ${action}ing invitation:`, error);
