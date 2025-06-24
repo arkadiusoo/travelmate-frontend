@@ -47,7 +47,7 @@ function NavigationBar({ onLoginClick }) {
                         className={`text-light ${isActive("/dashboard") ? "fw-bold" : ""}`}
                         style={{ cursor: "pointer" }}
                     >
-                      🏠 Dashboard
+                      Dashboard
                     </Nav.Link>
 
                     <Nav.Link
@@ -55,7 +55,7 @@ function NavigationBar({ onLoginClick }) {
                         className={`text-light ${isActive("/trips") ? "fw-bold" : ""}`}
                         style={{ cursor: "pointer" }}
                     >
-                      🧳 Wycieczki
+                      Wycieczki
                     </Nav.Link>
 
                     <Nav.Link
@@ -63,7 +63,7 @@ function NavigationBar({ onLoginClick }) {
                         className={`text-light ${isActive("/budget") ? "fw-bold" : ""}`}
                         style={{ cursor: "pointer" }}
                     >
-                      💰 Budżet
+                      Budżet
                     </Nav.Link>
 
                     <Nav.Link
@@ -71,7 +71,7 @@ function NavigationBar({ onLoginClick }) {
                         className={`text-light ${isActive("/participants") ? "fw-bold" : ""}`}
                         style={{ cursor: "pointer" }}
                     >
-                      👥 Uczestnicy
+                      Uczestnicy
                     </Nav.Link>
 
                     <Nav.Link
