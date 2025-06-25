@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Button, Card, Modal, Form, Spinner, InputGroup, Row, Col, ListGroup } from 'react-bootstrap';
 import { BsTrash, BsPencil, BsArrowDown } from 'react-icons/bs';
 import {
@@ -261,7 +261,10 @@ export default function PlanTrip() {
   };
 
   const dates = [...new Set(points.map(p => p.date))];
-  const displayPoints = points.filter(p => !filterDate || p.date === filterDate);
+  const displayPoints = useMemo(
+    () => points.filter(p => !filterDate || p.date === filterDate),
+    [points, filterDate]
+  );
 
   // previous coords
   const previousCoordsRef = useRef('');
@@ -295,6 +298,7 @@ export default function PlanTrip() {
       previousCoordsRef.current = coords;
     }
   }, [displayPoints, filterDate]);
+
 
   useEffect(() => {
     if (!map || displayPoints.length === 0 || hasUserInteracted) return;
