@@ -1,30 +1,37 @@
 import React from "react";
-import { Navbar, Nav, Container } from "react-bootstrap";
-import { useNavigate, useLocation } from "react-router-dom"; // ✅ Add navigation
-import { useAuth } from "../contexts/AuthContext"; // ✅ Use AuthContext
+import { Navbar, Nav, Container, Button } from "react-bootstrap";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import ThemeToggle from "./ThemeToggle";
 import logo from "../assets/logo.png";
 
 function NavigationBar({ onLoginClick }) {
-  const { isAuthenticated, logout } = useAuth(); // ✅ Use AuthContext
-  const navigate = useNavigate(); // ✅ For navigation
-  const location = useLocation(); // ✅ For active link highlighting
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Helper to check if current page is active
   const isActive = (path) => location.pathname === path;
 
   // ✅ PROPER LOGOUT HANDLER
   const handleLogout = () => {
-    logout(); // Use AuthContext logout
-    navigate("/"); // Navigate to home
+    logout();
+    navigate("/");
+  };
+
+  // ✅ FIXED NAVIGATION HANDLERS
+  const handleNavigation = (path, event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    navigate(path);
   };
 
   return (
       <Navbar bg="dark" variant="dark" expand="lg">
         <Container>
           <Navbar.Brand
-              onClick={() => navigate("/dashboard")} // ✅ Make clickable
-              style={{ cursor: "pointer" }} // ✅ Show it's clickable
+              onClick={(e) => handleNavigation("/dashboard", e)}
+              style={{ cursor: "pointer" }}
               className="d-flex align-items-center gap-2"
           >
             <img
@@ -39,58 +46,64 @@ function NavigationBar({ onLoginClick }) {
           <Navbar.Collapse>
             <Nav className="ms-auto d-flex align-items-center gap-2">
 
-              {/* ✅ USEFUL NAVIGATION FOR LOGGED-IN USERS */}
               {isAuthenticated ? (
                   <>
-                    <Nav.Link
-                        onClick={() => navigate("/dashboard")}
-                        className={`text-light ${isActive("/dashboard") ? "fw-bold" : ""}`}
-                        style={{ cursor: "pointer" }}
+                    {/* ✅ FIXED: Use Button instead of Nav.Link */}
+                    <Button
+                        variant="link"
+                        onClick={(e) => handleNavigation("/dashboard", e)}
+                        className={`text-light p-2 text-decoration-none ${isActive("/dashboard") ? "fw-bold" : ""}`}
+                        style={{ border: 'none' }}
                     >
                       Dashboard
-                    </Nav.Link>
+                    </Button>
 
-                    <Nav.Link
-                        onClick={() => navigate("/trips")}
-                        className={`text-light ${isActive("/trips") ? "fw-bold" : ""}`}
-                        style={{ cursor: "pointer" }}
+                    <Button
+                        variant="link"
+                        onClick={(e) => handleNavigation("/trips", e)}
+                        className={`text-light p-2 text-decoration-none ${isActive("/trips") ? "fw-bold" : ""}`}
+                        style={{ border: 'none' }}
                     >
                       Wycieczki
-                    </Nav.Link>
+                    </Button>
 
-                    <Nav.Link
-                        onClick={() => navigate("/budget")}
-                        className={`text-light ${isActive("/budget") ? "fw-bold" : ""}`}
-                        style={{ cursor: "pointer" }}
+                    <Button
+                        variant="link"
+                        onClick={(e) => handleNavigation("/budget", e)}
+                        className={`text-light p-2 text-decoration-none ${isActive("/budget") ? "fw-bold" : ""}`}
+                        style={{ border: 'none' }}
                     >
                       Budżet
-                    </Nav.Link>
+                    </Button>
 
-                    <Nav.Link
-                        onClick={() => navigate("/participants")}
-                        className={`text-light ${isActive("/participants") ? "fw-bold" : ""}`}
-                        style={{ cursor: "pointer" }}
+                    <Button
+                        variant="link"
+                        onClick={(e) => handleNavigation("/participants", e)}
+                        className={`text-light p-2 text-decoration-none ${isActive("/participants") ? "fw-bold" : ""}`}
+                        style={{ border: 'none' }}
                     >
                       Uczestnicy
-                    </Nav.Link>
+                    </Button>
 
-                    <Nav.Link
-                        as="button"
+                    <Button
+                        variant="link"
                         onClick={handleLogout}
-                        className="text-light"
+                        className="text-light p-2 text-decoration-none"
+                        style={{ border: 'none' }}
                     >
                       Wyloguj
-                    </Nav.Link>
+                    </Button>
                   </>
               ) : (
                   <>
-                    <Nav.Link
-                        as="button"
+                    <Button
+                        variant="link"
                         onClick={onLoginClick}
-                        className="text-light"
+                        className="text-light p-2 text-decoration-none"
+                        style={{ border: 'none' }}
                     >
                       Logowanie
-                    </Nav.Link>
+                    </Button>
                   </>
               )}
 

@@ -40,8 +40,11 @@ function InviteParticipant({ tripId, onSuccess, onCancel }) {
             });
 
             if (!response.ok) {
-                const errorData = await response.text();
-                throw new Error(errorData || 'Nie udało się wysłać zaproszenia');
+                // Parse JSON error response
+                const errorData = await response.json();
+                // Extract the message field
+                const errorMessage = errorData.message || 'Nie udało się wysłać zaproszenia';
+                throw new Error(errorMessage);
             }
 
             setSuccess('Zaproszenie zostało wysłane pomyślnie!');
@@ -55,7 +58,7 @@ function InviteParticipant({ tripId, onSuccess, onCancel }) {
 
         } catch (error) {
             console.error('Error inviting participant:', error);
-            setError('Błąd podczas wysyłania zaproszenia: ' + error.message);
+            setError(error.message);
         } finally {
             setLoading(false);
         }

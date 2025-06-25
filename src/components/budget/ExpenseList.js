@@ -6,7 +6,9 @@ function ExpenseList({ tripId }) {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { token } = useAuth();
+  const [paymentStatus, setPaymentStatus] = useState({});
+  const [userRole, setUserRole] = useState(null); // ✅ NEW: Track user role in trip
+  const { token, user } = useAuth();
   const [participants, setParticipants] = useState([]);
   const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
 
@@ -15,9 +17,10 @@ function ExpenseList({ tripId }) {
     'Content-Type': 'application/json'
   });
 
+  // ✅ NEW: Check user's role in the trip
   useEffect(() => {
-    if (!tripId || !token) {
-      setParticipants([]);
+    if (!tripId || !token || !user?.email) {
+      setUserRole(null);
       return;
     }
 
@@ -30,18 +33,32 @@ function ExpenseList({ tripId }) {
           }
           return res.json();
         })
-        .then(data => setParticipants(data || []))
+        .then(data => {
+          setParticipants(data || []);
+
+          // Find current user's role
+          const currentUserParticipant = data.find(p =>
+              p.email === user.email && p.status === 'ACCEPTED'
+          );
+
+          if (currentUserParticipant) {
+            setUserRole(currentUserParticipant.role);
+            console.log('👤 User role in this trip:', currentUserParticipant.role);
+          } else {
+            setUserRole(null);
+            console.log('👤 User is not a participant in this trip');
+          }
+        })
         .catch(err => {
           console.error('Error fetching participants:', err);
-          // Don't show error for participants, just log it
           setParticipants([]);
+          setUserRole(null);
         });
-  }, [tripId, token, API_BASE]);
+  }, [tripId, token, user?.email, API_BASE]);
 
   const getParticipantName = (userId) => {
     const participant = participants.find(p => p.userId === userId);
     if (participant) {
-      // Now we have firstName and lastName from the enhanced DTO
       if (participant.firstName && participant.lastName) {
         return `${participant.firstName} ${participant.lastName}`.trim();
       }
@@ -55,6 +72,48 @@ function ExpenseList({ tripId }) {
       }
     }
     return userId?.toString()?.substring(0, 8) || 'Unknown';
+  };
+
+  // ✅ NEW: Check permissions
+  const canDeleteExpenses = () => {
+    return userRole === 'ORGANIZER';
+  };
+
+  const canManagePayments = () => {
+    return userRole === 'ORGANIZER' || userRole === 'MEMBER';
+  };
+
+  // ✅ NEW: Create participants from expense data
+  const createParticipantsFromExpense = (expense) => {
+    if (!expense.participantShares) return [];
+
+    return Object.entries(expense.participantShares).map(([userId, share]) => {
+      const sharePercentage = share * 100;
+      const shareAmount = expense.amount * share;
+      const participantName = getParticipantName(userId);
+
+      return {
+        userId,
+        userName: participantName,
+        share: sharePercentage,
+        shareAmount: shareAmount,
+        isPaid: paymentStatus[`${expense.id}-${userId}`] || false
+      };
+    });
+  };
+
+  // ✅ NEW: Toggle payment status locally
+  const togglePaid = (expenseId, participantId) => {
+    if (!canManagePayments()) {
+      alert('Nie masz uprawnień do zarządzania płatnościami. Tylko członkowie i organizatorzy mogą to robić.');
+      return;
+    }
+
+    const key = `${expenseId}-${participantId}`;
+    setPaymentStatus(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
   };
 
   // Fetch expenses for selected trip
@@ -80,7 +139,10 @@ function ExpenseList({ tripId }) {
           }
           return res.json();
         })
-        .then(data => setExpenses(data || []))
+        .then(data => {
+          console.log('📊 Fetched expenses with participants:', data);
+          setExpenses(data || []);
+        })
         .catch(err => {
           console.error('Error fetching expenses:', err);
           setError('Błąd ładowania wydatków: ' + err.message);
@@ -89,45 +151,12 @@ function ExpenseList({ tripId }) {
         .finally(() => setLoading(false));
   }, [tripId, token, API_BASE]);
 
-  const togglePaid = async (expenseId, participantId) => {
-    try {
-      // Find current paid status
-      const expense = expenses.find(e => e.id === expenseId);
-      const participant = expense?.participants?.find(p => p.userId === participantId);
-      const newPaidStatus = !participant?.isPaid;
-
-      // Update via PATCH endpoint
-      const updates = {
-        participantPaidStatus: {
-          [participantId]: newPaidStatus
-        }
-      };
-
-      const response = await fetch(`${API_BASE}/trips/${tripId}/expenses/${expenseId}`, {
-        method: 'PATCH',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(updates)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to update paid status`);
-      }
-
-      const updatedExpense = await response.json();
-
-      // Update local state with response from server
-      setExpenses(prev =>
-          prev.map(expense =>
-              expense.id === expenseId ? updatedExpense : expense
-          )
-      );
-    } catch (err) {
-      console.error('Error toggling paid status:', err);
-      setError('Błąd aktualizacji statusu płatności: ' + err.message);
-    }
-  };
-
   const deleteExpense = async (expenseId) => {
+    if (!canDeleteExpenses()) {
+      alert('Nie masz uprawnień do usuwania wydatków. Tylko organizatorzy mogą usuwać wydatki.');
+      return;
+    }
+
     if (!window.confirm('Czy na pewno chcesz usunąć ten wydatek?')) {
       return;
     }
@@ -139,15 +168,41 @@ function ExpenseList({ tripId }) {
       });
 
       if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error('Nie masz uprawnień do usuwania wydatków');
+        }
         throw new Error(`HTTP ${response.status}: Failed to delete expense`);
       }
 
       // Remove from local state
       setExpenses(prev => prev.filter(expense => expense.id !== expenseId));
+
+      // Clean up payment status for deleted expense
+      setPaymentStatus(prev => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(key => {
+          if (key.startsWith(expenseId)) {
+            delete updated[key];
+          }
+        });
+        return updated;
+      });
     } catch (err) {
       console.error('Error deleting expense:', err);
       setError('Błąd usuwania wydatku: ' + err.message);
     }
+  };
+
+  // ✅ NEW: Get category display
+  const getCategoryDisplay = (category) => {
+    const categoryMap = {
+      'TRANSPORT': '🚗 Transport',
+      'FOOD': '🍽️ Jedzenie',
+      'ACCOMMODATION': '🏨 Noclegi',
+      'ACTIVITIES': '🎯 Atrakcje',
+      'OTHER': '📝 Inne'
+    };
+    return categoryMap[category] || category;
   };
 
   if (!tripId) {
@@ -184,6 +239,7 @@ function ExpenseList({ tripId }) {
       <>
         {error && <Alert variant="danger" className="mb-3">{error}</Alert>}
 
+
         <Table bordered hover responsive>
           <thead>
           <tr>
@@ -191,63 +247,91 @@ function ExpenseList({ tripId }) {
             <th>Kwota</th>
             <th>Opłacone przez</th>
             <th>Uczestnicy</th>
-            <th>Akcje</th>
+            {canDeleteExpenses() && <th>Akcje</th>} {/* ✅ Only show for ORGANIZER */}
           </tr>
           </thead>
           <tbody>
-          {expenses.map((expense) => (
-              <tr key={expense.id}>
-                <td>
-                  <strong>{expense.title}</strong>
-                  {expense.description && (
-                      <div className="text-muted small">{expense.description}</div>
+          {expenses.map((expense) => {
+            const expenseParticipants = createParticipantsFromExpense(expense);
+
+            return (
+                <tr key={expense.id}>
+                  <td>
+                    <div>
+                      <strong>{getCategoryDisplay(expense.category)}</strong>
+                    </div>
+                    {expense.description && (
+                        <div className="text-muted small mt-1">{expense.description}</div>
+                    )}
+                    <div className="text-muted small">
+                      {new Date(expense.date).toLocaleDateString('pl-PL')}
+                    </div>
+                  </td>
+                  <td>
+                    <strong>{expense.amount?.toFixed(2)} zł</strong>
+                  </td>
+                  <td>{getParticipantName(expense.payerId)}</td>
+                  <td>
+                    <div className="d-flex flex-column gap-2">
+                      {expenseParticipants.length > 0 ? (
+                          expenseParticipants.map((participant) => (
+                              <Button
+                                  key={participant.userId}
+                                  variant={participant.isPaid ? "success" : "outline-secondary"}
+                                  size="sm"
+                                  className="text-start"
+                                  onClick={() => togglePaid(expense.id, participant.userId)}
+                                  disabled={!canManagePayments()} // ✅ Disable for GUEST
+                                  title={!canManagePayments() ? "Nie masz uprawnień do zarządzania płatnościami" : ""}
+                              >
+                                <div className="d-flex justify-content-between align-items-center w-100">
+                              <span>
+                                {participant.userName} ({participant.share.toFixed(0)}%)
+                              </span>
+                                  <span className="ms-2">
+                                {participant.shareAmount.toFixed(2)} zł
+                              </span>
+                                </div>
+                                <small className="d-block">
+                                  {participant.isPaid ? "✓ Opłacone" : "⏳ Do opłaty"}
+                                </small>
+                              </Button>
+                          ))
+                      ) : (
+                          <small className="text-muted">Brak uczestników</small>
+                      )}
+                    </div>
+                  </td>
+                  {canDeleteExpenses() && ( // ✅ Only show delete button for ORGANIZER
+                      <td>
+                        <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => deleteExpense(expense.id)}
+                            title="Usuń wydatek"
+                        >
+                          🗑️ Usuń
+                        </Button>
+                      </td>
                   )}
-                </td>
-                <td>
-                  <strong>{expense.amount?.toFixed(2)} zł</strong>
-                </td>
-                <td>{getParticipantName(expense.payerId)}</td>
-                <td>
-                  <div className="d-flex flex-column gap-2">
-                    {expense.participants?.map((participant) => {
-                      const shareAmount = (expense.amount * participant.share) / 100;
-                      return (
-                          <Button
-                              key={participant.userId}
-                              variant={participant.isPaid ? "success" : "outline-secondary"}
-                              size="sm"
-                              className="text-start"
-                              onClick={() => togglePaid(expense.id, participant.userId)}
-                          >
-                            <div className="d-flex justify-content-between align-items-center w-100">
-                          <span>
-                            {participant.userName || participant.userId} ({participant.share}%)
-                          </span>
-                              <span className="ms-2">
-                            {shareAmount.toFixed(2)} zł
-                          </span>
-                            </div>
-                            <small className="d-block">
-                              {participant.isPaid ? "✓ Opłacone" : "⏳ Do opłaty"}
-                            </small>
-                          </Button>
-                      );
-                    }) || <small className="text-muted">Brak uczestników</small>}
-                  </div>
-                </td>
-                <td>
-                  <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={() => deleteExpense(expense.id)}
-                  >
-                    Usuń
-                  </Button>
-                </td>
-              </tr>
-          ))}
+                </tr>
+            );
+          })}
           </tbody>
         </Table>
+
+        <div className="mt-3 p-2 bg-light rounded small">
+          <div className="d-flex justify-content-between">
+            <span>Łączna liczba wydatków:</span>
+            <span><strong>{expenses.length}</strong></span>
+          </div>
+          <div className="d-flex justify-content-between">
+            <span>Łączna kwota:</span>
+            <span><strong>
+              {expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0).toFixed(2)} zł
+            </strong></span>
+          </div>
+        </div>
       </>
   );
 }

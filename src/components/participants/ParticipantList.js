@@ -36,6 +36,28 @@ function ParticipantList({
         return statusMap[status] || { text: status, variant: 'secondary' };
     };
 
+    // ✅ NEW: Improved date display function
+    const getDateDisplay = (participant) => {
+        if (participant.status === 'ACCEPTED' && participant.joinedAt) {
+            return new Date(participant.joinedAt).toLocaleDateString('pl-PL');
+        }
+
+        if (participant.status === 'PENDING' && participant.createdAt) {
+            return `Zaproszony: ${new Date(participant.createdAt).toLocaleDateString('pl-PL')}`;
+        }
+
+        if (participant.status === 'DECLINED') {
+            return 'Odrzucono zaproszenie';
+        }
+
+        // Fallback to createdAt if available
+        if (participant.createdAt) {
+            return new Date(participant.createdAt).toLocaleDateString('pl-PL');
+        }
+
+        return 'Nie określono';
+    };
+
     const handleRemoveParticipant = async (participantId) => {
         if (!window.confirm('Czy na pewno chcesz usunąć tego uczestnika?')) {
             return;
@@ -135,10 +157,8 @@ function ParticipantList({
                                 </Badge>
                             </td>
                             <td>
-                                {participant.createdAt ?
-                                    new Date(participant.createdAt).toLocaleDateString('pl-PL') :
-                                    'Nie określono'
-                                }
+                                {/* ✅ UPDATED: Improved date display */}
+                                {getDateDisplay(participant)}
                             </td>
 
                             {/* ✅ ACTIONS COLUMN - Only for non-guests and if permissions allow */}
@@ -202,8 +222,6 @@ function ParticipantList({
                 })}
                 </tbody>
             </Table>
-
-
         </div>
     );
 }
