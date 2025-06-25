@@ -135,9 +135,12 @@ function ExpenseForm({ tripId, onSuccess }) {
   };
 
   const handleShareChange = (userId, value) => {
-    const numericValue = parseFloat(value) || 0;
-    const updatedActive = { ...activeParticipants };
+    const numericValue = parseFloat(value);
+    if (isNaN(numericValue) || numericValue < 0 || numericValue > 100) {
+        return;
+    }
 
+    const updatedActive = { ...activeParticipants };
     if (numericValue === 0) {
       updatedActive[userId] = false;
     } else {
@@ -211,7 +214,6 @@ function ExpenseForm({ tripId, onSuccess }) {
       payerId: formData.payerId,
       participantShares: activeSharesInDecimal,
       tripId: tripId,
-      creatorId: user.userId,
     };
 
     console.log('Sending expense data:', expenseData);
@@ -418,11 +420,8 @@ function ExpenseForm({ tripId, onSuccess }) {
                         </Col>
                         <Col xs={4}>
                           <Form.Control
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              max="100"
-                              value={(shares[userId] || 0).toFixed(2)}
+                              type="text"
+                              value={(shares[userId] || 0).toFixed(1)}
                               disabled={!customSplit || !activeParticipants[userId]}
                               onChange={(e) => handleShareChange(userId, e.target.value)}
                           />
