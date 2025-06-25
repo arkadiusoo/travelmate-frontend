@@ -196,11 +196,11 @@ function ExpenseList({ tripId }) {
   // ✅ NEW: Get category display
   const getCategoryDisplay = (category) => {
     const categoryMap = {
-      'TRANSPORT': '🚗 Transport',
-      'FOOD': '🍽️ Jedzenie',
-      'ACCOMMODATION': '🏨 Noclegi',
-      'ACTIVITIES': '🎯 Atrakcje',
-      'OTHER': '📝 Inne'
+      'TRANSPORT': 'Transport',
+      'FOOD': 'Jedzenie',
+      'ACCOMMODATION': 'Noclegi',
+      'ACTIVITIES': 'Atrakcje',
+      'OTHER': 'Inne'
     };
     return categoryMap[category] || category;
   };
@@ -244,8 +244,9 @@ function ExpenseList({ tripId }) {
           <thead>
           <tr>
             <th>Nazwa</th>
+            <th>Kategoria</th>
             <th>Kwota</th>
-            <th>Opłacone przez</th>
+            <th>Płatnik</th>
             <th>Uczestnicy</th>
             {canDeleteExpenses() && <th>Akcje</th>} {/* ✅ Only show for ORGANIZER */}
           </tr>
@@ -258,13 +259,18 @@ function ExpenseList({ tripId }) {
                 <tr key={expense.id}>
                   <td>
                     <div>
-                      <strong>{getCategoryDisplay(expense.category)}</strong>
+                      <strong>{expense.name}</strong>
                     </div>
                     {expense.description && (
                         <div className="text-muted small mt-1">{expense.description}</div>
                     )}
                     <div className="text-muted small">
                       {new Date(expense.date).toLocaleDateString('pl-PL')}
+                    </div>
+                  </td>
+                  <td>
+                    <div>
+                      <strong>{getCategoryDisplay(expense.category)}</strong>
                     </div>
                   </td>
                   <td>

@@ -203,13 +203,15 @@ function ExpenseForm({ tripId, onSuccess }) {
 
     // Create expense data matching ExpenseDTO structure
     const expenseData = {
+      name: formData.name,
       amount: numericAmount,
       category: formData.category,
       description: formData.description || "",
       date: formData.date,
       payerId: formData.payerId,
       participantShares: activeSharesInDecimal,
-      tripId: tripId
+      tripId: tripId,
+      creatorId: user.userId,
     };
 
     console.log('Sending expense data:', expenseData);
@@ -289,7 +291,17 @@ function ExpenseForm({ tripId, onSuccess }) {
           <Row>
             <Col md={6}>
               {error && <Alert variant="danger">{error}</Alert>}
-
+              <Form.Group className="mb-3">
+                <Form.Label>Nazwa wydatku *</Form.Label>
+                <Form.Control
+                    type="text"
+                    name="name"
+                    placeholder="np. Hotel XYZ"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                />
+              </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label>Kwota (zł) *</Form.Label>
                 <Form.Control
