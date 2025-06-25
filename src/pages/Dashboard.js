@@ -76,7 +76,12 @@ function Dashboard() {
                   <Card.Text>
                     Zapraszaj znajomych i zarządzaj rolami uczestników.
                   </Card.Text>
-                  <Button variant="info" className="w-100">
+                  <Button
+                      variant="info"
+                      size="lg"
+                      className="w-100"
+                      onClick={() => navigate('/participants')}
+                  >
                     Zarządzaj uczestnikami
                   </Button>
                 </Card.Body>
