@@ -185,12 +185,14 @@ function ExpenseForm({ tripId, onSuccess }) {
 
     // Convert percentage shares to decimal shares (0.0 to 1.0)
     const activeSharesInDecimal = {};
+    const activePaymentStatus = {};
     const activeUserIds = Object.entries(activeParticipants)
         .filter(([_, isActive]) => isActive)
         .map(([userId]) => userId);
 
     for (const userId of activeUserIds) {
       activeSharesInDecimal[userId] = (shares[userId] || 0) / 100;
+      activePaymentStatus[userId] = false;
     }
 
     // Validate shares sum to 100%
@@ -214,6 +216,7 @@ function ExpenseForm({ tripId, onSuccess }) {
       payerId: formData.payerId,
       participantShares: activeSharesInDecimal,
       tripId: tripId,
+      participantPaymentStatus: activePaymentStatus,
     };
 
     console.log('Sending expense data:', expenseData);

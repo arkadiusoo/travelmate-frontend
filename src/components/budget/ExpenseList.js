@@ -102,18 +102,47 @@ function ExpenseList({ tripId }) {
     });
   };
 
-  // ✅ NEW: Toggle payment status locally
+  // ✅ NEW: Toggle payment status and update server
   const togglePaid = (expenseId, participantId) => {
+
     if (!canManagePayments()) {
       alert('Nie masz uprawnień do zarządzania płatnościami. Tylko członkowie i organizatorzy mogą to robić.');
       return;
     }
 
     const key = `${expenseId}-${participantId}`;
-    setPaymentStatus(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+    setPaymentStatus(prev => {
+      const updated = { ...prev, [key]: true }; // Always mark as paid
+      return updated;
+    });
+
+    // Prepare the PATCH request data
+    const updates = {
+      participantPaymentStatus: {
+        [participantId]: true // Remove participant's share from the expense
+      }
+    };
+
+    // Send PATCH request to update on the server
+    fetch(`${API_BASE}/trips/${tripId}/expenses/${expenseId}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(updates)
+    })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Nie udało się zaktualizować wydatku');
+        }
+        return res.json();
+      })
+      .then(updatedExpense => {
+        console.log('Expense updated:', updatedExpense);
+        // Optionally update local state if needed
+      })
+      .catch(err => {
+        console.error('Error updating expense:', err);
+        setError('Błąd podczas aktualizacji wydatku: ' + err.message);
+      });
   };
 
   // Fetch expenses for selected trip
