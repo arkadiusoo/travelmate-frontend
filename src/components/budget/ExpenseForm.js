@@ -3,6 +3,7 @@ import { Form, Button, Row, Col, Container, Alert, Spinner } from "react-bootstr
 import { useAuth } from "../../contexts/AuthContext";
 
 function ExpenseForm({ tripId, onSuccess, name = "", externalDate = "" }) {
+  console.log('ExpenseForm props:', tripId, onSuccess, name, externalDate);
   const [customSplit, setCustomSplit] = useState(false);
   const [participants, setParticipants] = useState([]);
   const [activeParticipants, setActiveParticipants] = useState({});

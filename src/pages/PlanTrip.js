@@ -83,6 +83,8 @@ export default function PlanTrip() {
     dateFrom: '',
     dateTo: ''
   });
+  // State for passing point data to ExpenseForm
+  const [expenseFormData, setExpenseFormData] = useState(null);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -317,7 +319,16 @@ export default function PlanTrip() {
     }
     map.flyTo([pt.position.lat, pt.position.lng], 13);
   };
-
+  const handleAddExpense = (pt) => {
+    // Pass point data to the ExpenseForm component
+    setExpenseFormData({
+      title: pt.title,
+      date: pt.date,
+      description: pt.description,
+      pointId: pt.id
+    });
+    setShowModal(true);
+  }
   // ✅ Add loading state for authentication
   if (!token) {
     return (
@@ -388,7 +399,7 @@ export default function PlanTrip() {
                               variant="outline-primary"
                               size="sm"
                               className="mb-2"
-                              onClick={() => setShowModal(true)}
+                              onClick={() => handleAddExpense(pt)}
                           >Dodaj wydatek</Button>
                           <div className="flex-grow-1 me-3">
                             <h5>{pt.title}</h5>
@@ -595,10 +606,13 @@ export default function PlanTrip() {
             onClose={() => setShowModal(false)}
             title="Dodaj wydatek"
         >
-          <ExpenseForm
-              tripId={tripId}
-              // onSuccess={handleExpenseAdded}
-          />
+          {expenseFormData && (
+              <ExpenseForm
+                  tripId={tripId}
+                  externalDate={expenseFormData.date}
+                  name={expenseFormData.title}
+              />
+          )}
         </WideModalWrapper>
       </MainLayout>
   );
