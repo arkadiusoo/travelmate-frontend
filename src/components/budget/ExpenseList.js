@@ -6,7 +6,7 @@ function ExpenseList({ tripId }) {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [paymentStatus, setPaymentStatus] = useState({});
+  const [participantPaymentStatus, setParticipantPaymentStatus] = useState({});
   const [userRole, setUserRole] = useState(null); // ✅ NEW: Track user role in trip
   const { token, user } = useAuth();
   const [participants, setParticipants] = useState([]);
@@ -91,27 +91,31 @@ function ExpenseList({ tripId }) {
       const sharePercentage = share * 100;
       const shareAmount = expense.amount * share;
       const participantName = getParticipantName(userId);
+      const local_participantPaymentStatus = expense.participantPaymentStatus || {};
+
 
       return {
         userId,
         userName: participantName,
         share: sharePercentage,
         shareAmount: shareAmount,
-        isPaid: paymentStatus[`${expense.id}-${userId}`] || false
+        isPaid: local_participantPaymentStatus[userId] || false
       };
     });
   };
 
   // ✅ NEW: Toggle payment status and update server
-  const togglePaid = (expenseId, participantId) => {
-
+  const togglePaid = (expenseId, participantId, isPaid) => {
+    if (isPaid) {
+      return;
+    }
     if (!canManagePayments()) {
       alert('Nie masz uprawnień do zarządzania płatnościami. Tylko członkowie i organizatorzy mogą to robić.');
       return;
     }
 
     const key = `${expenseId}-${participantId}`;
-    setPaymentStatus(prev => {
+    setParticipantPaymentStatus(prev => {
       const updated = { ...prev, [key]: true }; // Always mark as paid
       return updated;
     });
@@ -207,7 +211,7 @@ function ExpenseList({ tripId }) {
       setExpenses(prev => prev.filter(expense => expense.id !== expenseId));
 
       // Clean up payment status for deleted expense
-      setPaymentStatus(prev => {
+      setParticipantPaymentStatus(prev => {
         const updated = { ...prev };
         Object.keys(updated).forEach(key => {
           if (key.startsWith(expenseId)) {
@@ -315,7 +319,7 @@ function ExpenseList({ tripId }) {
                                   variant={participant.isPaid ? "success" : "outline-secondary"}
                                   size="sm"
                                   className="text-start"
-                                  onClick={() => togglePaid(expense.id, participant.userId)}
+                                  onClick={() => togglePaid(expense.id, participant.userId, participant.isPaid)}
                                   disabled={!canManagePayments()} // ✅ Disable for GUEST
                                   title={!canManagePayments() ? "Nie masz uprawnień do zarządzania płatnościami" : ""}
                               >
