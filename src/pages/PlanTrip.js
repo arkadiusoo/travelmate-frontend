@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo} from 'react';
 import { Button, Card, Modal, Form, Spinner, InputGroup, Row, Col, ListGroup } from 'react-bootstrap';
-import { BsTrash, BsPencil, BsArrowDown } from 'react-icons/bs';
+import { BsTrash, BsPencil, BsArrowDown, BsCheckCircle, BsJournalText } from 'react-icons/bs';
 import {
   MapContainer,
   TileLayer,
@@ -81,6 +81,9 @@ export default function PlanTrip() {
     dateFrom: '',
     dateTo: ''
   });
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [noteContent, setNoteContent] = useState('');
+  const [notePointId, setNotePointId] = useState(null);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -112,7 +115,9 @@ export default function PlanTrip() {
     setSearch(value);
     const len = value.length;
     if (len >= 3) {
-      fetch(`${API_BASE}/places/search?q=${encodeURIComponent(value)}`)
+      fetch(`${API_BASE}/places/search?q=${encodeURIComponent(value)}`, {
+        headers: getAuthHeaders()
+      })
           .then(res => res.json())
           .then(data => {
             if (data.predictions) {
@@ -130,7 +135,9 @@ export default function PlanTrip() {
   };
 
   const handleSuggestionClick = (s) => {
-    fetch(`${API_BASE}/places/details?placeId=${s.placeId}`)
+    fetch(`${API_BASE}/places/details?placeId=${s.placeId}`, {
+      headers: getAuthHeaders()
+    })
         .then(res => res.json())
         .then(result => {
           const location = result.result.geometry.location;
@@ -200,6 +207,12 @@ export default function PlanTrip() {
     setLoadingName(false);
   };
 
+  const openNoteModal = (pointId) => {
+    setNotePointId(pointId);
+    setNoteContent('');
+    setShowNoteModal(true);
+  };  
+
   const openEdit = (pt) => {
     setPosition(pt.position);
     setForm({ title: pt.title, date: pt.date, description: pt.description });
@@ -210,6 +223,23 @@ export default function PlanTrip() {
 
   const handleChange = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
+  const handleMarkVisited = (e) => {
+    if (!token) return;
+  
+    fetch(`${API_BASE}/trips/${tripId}/points/${e}/visited`, {
+      method: 'PATCH',
+      headers: getAuthHeaders()
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Błąd oznaczania punktu jako odwiedzonego");
+        return res.json();
+      })
+      .then(updated => {
+        setPoints(prev => prev.map(p => p.id === e ? { ...p, visited: true } : p));
+      })
+      .catch(console.error);
+  };
+
   const handleSave = (e) => {
     e.preventDefault();
     if (!form.title || !form.date || !position || !token) return; // ✅ Check for token
@@ -219,7 +249,8 @@ export default function PlanTrip() {
       date: form.date,
       description: form.description,
       latitude: position.lat,
-      longitude: position.lng
+      longitude: position.lng,
+      visited: false
     };
     const url = `${API_BASE}/trips/${tripId}/points${editingId ? `/${editingId}` : ''}`;
     const method = editingId ? 'PUT' : 'POST';
@@ -376,35 +407,32 @@ export default function PlanTrip() {
                 ) : displayPoints.map((pt, idx) => (
                     <div key={pt.id} className="d-flex flex-column align-items-center mb-4">
                       <Card
-                          className={`shadow-sm w-75 ${new Date(pt.date) < new Date(today) ? 'bg-light text-muted' : ''}`}
+                          className={`shadow-sm w-100 ${new Date(pt.date) < new Date(today) ? 'bg-light text-muted' : ''}`}
                           onClick={() => handleZoomToPoint(pt)}
                           style={{ cursor: 'pointer' }}
                       >
                         <Card.Body className="d-flex">
                           <div className="flex-grow-1 me-3">
-                            <h5>{pt.title}</h5>
+                          <h5 className={pt.visited ? 'text-success' : ''}>{pt.title}</h5>
                             <small className="text-muted">
                               {new Date(pt.date).toLocaleDateString('pl-PL')}
                             </small>
                             <p className="mt-2 mb-0">{pt.description}</p>
                           </div>
-                          <div className="d-flex flex-column align-items-end">
-                            <Button
-                                variant="outline-primary"
-                                size="sm"
-                                className="mb-2"
-                                onClick={e => { e.stopPropagation(); openEdit(pt); }}
-                            >
-                              <BsPencil />
-                            </Button>
-                            <Button
-                                variant="outline-danger"
-                                size="sm"
-                                onClick={e => handleRemove(e, pt.id)}
-                            >
-                              <BsTrash />
-                            </Button>
-                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+      <Button variant="outline-primary" size="sm" onClick={e => { e.stopPropagation(); openEdit(pt); }} title="Edytuj">
+        <BsPencil />
+      </Button>
+      <Button variant="outline-danger" size="sm" onClick={e => handleRemove(e, pt.id)} title="Usuń">
+        <BsTrash />
+      </Button>
+      <Button variant="outline-success" size="sm" title="Oznacz jako odwiedzone" onClick={e => { e.stopPropagation(); handleMarkVisited(pt.id); }} disabled={pt.visited}>
+        <BsCheckCircle /> 
+      </Button>
+      <Button variant="outline-warning" size="sm" style={{ minWidth: '30px' }} onClick={() => openNoteModal(pt.id)} title="Notatki">
+        <BsJournalText />
+      </Button>
+    </div>
                         </Card.Body>
 
                       </Card>
@@ -555,7 +583,7 @@ export default function PlanTrip() {
                   fetch(`${API_BASE}/chat`, {
                     method: 'POST',
                     headers: getAuthHeaders(),
-                    body: JSON.stringify({ prompt })
+                    body: JSON.stringify({ prompt, tripId })
                   })
                       .then(res => res.json())
                       .then(data => {
@@ -581,6 +609,54 @@ export default function PlanTrip() {
             </Button>
           </Modal.Footer>
         </Modal>
+        <Modal show={showNoteModal} onHide={() => setShowNoteModal(false)} centered>
+  <Modal.Header closeButton>
+    <Modal.Title>Dodaj notatkę</Modal.Title>
+  </Modal.Header>
+  <Modal.Body>
+    <Form>
+      <Form.Group>
+        <Form.Label>Treść notatki</Form.Label>
+        <Form.Control
+          as="textarea"
+          rows={4}
+          value={noteContent}
+          onChange={(e) => setNoteContent(e.target.value)}
+        />
+      </Form.Group>
+    </Form>
+  </Modal.Body>
+  <Modal.Footer>
+    <Button variant="secondary" onClick={() => setShowNoteModal(false)}>Anuluj</Button>
+    <Button
+      variant="primary"
+      onClick={() => {
+        fetch(`${API_BASE}/notes/add?tripId=${tripId}`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            author: "Szymon", //
+            content: noteContent,
+            date: new Date().toISOString()
+          })
+        })
+        .then(res => {
+          if (!res.ok) throw new Error("Błąd dodawania notatki");
+          return res.text();
+        })
+        .then(msg => {
+          alert(msg);
+          setShowNoteModal(false);
+        })
+        .catch(console.error);
+      }}
+      disabled={!noteContent.trim()}
+    >
+      Zapisz
+    </Button>
+  </Modal.Footer>
+</Modal>
+
       </MainLayout>
   );
 }
