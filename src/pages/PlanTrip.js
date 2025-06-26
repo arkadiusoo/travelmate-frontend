@@ -15,6 +15,8 @@ import { useAuth } from '../contexts/AuthContext'; // ✅ Import useAuth
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import MainLayout from '../layouts/MainLayout';
+import WideModalWrapper from "../components/WideModalWrapper";
+import ExpenseForm from "../components/budget/ExpenseForm";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -199,6 +201,7 @@ export default function PlanTrip() {
     setForm(prev => ({ ...prev, title, date: today }));
     setLoadingName(false);
   };
+
 
   const openEdit = (pt) => {
     setPosition(pt.position);
@@ -385,6 +388,7 @@ export default function PlanTrip() {
                               variant="outline-primary"
                               size="sm"
                               className="mb-2"
+                              onClick={() => setShowModal(true)}
                           >Dodaj wydatek</Button>
                           <div className="flex-grow-1 me-3">
                             <h5>{pt.title}</h5>
@@ -586,6 +590,16 @@ export default function PlanTrip() {
             </Button>
           </Modal.Footer>
         </Modal>
+        <WideModalWrapper
+            show={showModal}
+            onClose={() => setShowModal(false)}
+            title="Dodaj wydatek"
+        >
+          <ExpenseForm
+              tripId={tripId}
+              // onSuccess={handleExpenseAdded}
+          />
+        </WideModalWrapper>
       </MainLayout>
   );
 }

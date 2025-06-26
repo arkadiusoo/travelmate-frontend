@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Form, Button, Row, Col, Container, Alert, Spinner } from "react-bootstrap";
 import { useAuth } from "../../contexts/AuthContext";
 
-function ExpenseForm({ tripId, onSuccess }) {
+function ExpenseForm({ tripId, onSuccess, name = "", externalDate = "" }) {
   const [customSplit, setCustomSplit] = useState(false);
   const [participants, setParticipants] = useState([]);
   const [activeParticipants, setActiveParticipants] = useState({});
@@ -11,8 +11,10 @@ function ExpenseForm({ tripId, onSuccess }) {
     amount: "",
     category: "OTHER",
     description: "",
-    date: new Date().toISOString().split('T')[0],
+    date: externalDate || new Date().toISOString().split('T')[0],
     payerId: "",
+    name: name || "",
+    externalDate: externalDate || "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -242,8 +244,10 @@ function ExpenseForm({ tripId, onSuccess }) {
         amount: "",
         category: "OTHER",
         description: "",
-        date: new Date().toISOString().split('T')[0],
+        date: externalDate || new Date().toISOString().split('T')[0],
         payerId: "",
+        name: name || "",
+        externalDate: externalDate || "",
       });
 
       // Reset participants to initial state
@@ -305,6 +309,7 @@ function ExpenseForm({ tripId, onSuccess }) {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
+                    disabled={formData.name && formData.externalDate}
                 />
               </Form.Group>
               <Form.Group className="mb-3">
@@ -345,6 +350,7 @@ function ExpenseForm({ tripId, onSuccess }) {
                     value={formData.date}
                     onChange={handleInputChange}
                     required
+                    disabled={formData.externalDate}
                 />
               </Form.Group>
 
