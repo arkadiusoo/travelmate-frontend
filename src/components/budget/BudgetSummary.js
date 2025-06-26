@@ -8,6 +8,7 @@ function BudgetSummary({ tripId }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const { token } = useAuth();
+    const [trip, setTrip] = useState(null);
     const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
 
     const getAuthHeaders = () => ({
@@ -39,12 +40,25 @@ function BudgetSummary({ tripId }) {
         if (!tripId || !token) {
             setBudgetSummary(null);
             setParticipants([]);
+            setTrip(null);
             return;
         }
 
         setLoading(true);
         setError('');
 
+        // Fetch trip details
+        fetch(`${API_BASE}/trips/${tripId}`, {
+            headers: getAuthHeaders()
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}: Failed to fetch trip details`);
+            }
+            return res.json();
+        })
+        .then(data => {setTrip(data) })
+            .catch(err => console.log('Error fetching trip details:', err))
         // Fetch both participants and budget summary
         Promise.all([
             fetch(`${API_BASE}/trips/${tripId}/participants`, {
@@ -119,6 +133,14 @@ function BudgetSummary({ tripId }) {
 
     return (
         <>
+            <ListGroup className="mb-3">
+                <ListGroup.Item>
+                    <strong>Planowany budżet:</strong>{" "}
+                    <span className="float-end">
+                        {trip.tripBudget?.toFixed(2) || '0.00'} zł
+                    </span>
+                </ListGroup.Item>
+            </ListGroup>
             <h6 className="text-center mb-3">Podsumowanie</h6>
 
             <ListGroup className="mb-3">
