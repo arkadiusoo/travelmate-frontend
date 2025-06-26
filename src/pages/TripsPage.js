@@ -9,7 +9,7 @@ export default function Trips() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [showModal, setShowModal] = useState(false);
-    const [form, setForm] = useState({ name: '' });
+    const [form, setForm] = useState({ name: '', budget: '' });
     const navigate = useNavigate();
     const { token } = useAuth();
     const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
@@ -65,8 +65,10 @@ export default function Trips() {
         fetch(`${API_BASE}/trips`, {
             method: 'POST',
             headers: getAuthHeaders(),
-            body: JSON.stringify({ name: form.name }),
+            body: JSON.stringify({ name: form.name, tripBudget: form.budget }),
+
         })
+
             .then(res => {
                 if (res.status === 401 || res.status === 403) {
                     throw new Error('Brak autoryzacji');
@@ -78,7 +80,7 @@ export default function Trips() {
             })
             .then(newTrip => {
                 setTrips(prev => [...prev, newTrip]);
-                setForm({ name: '' });
+                setForm({ name: '', budget: '' });
                 setShowModal(false);
                 navigate(`/trips/${newTrip.id}`);
             })
@@ -149,7 +151,7 @@ export default function Trips() {
                 <Form onSubmit={handleAdd}>
                     <Modal.Body>
                         <Form.Group controlId="tripName" className="mb-3">
-                            <Form.Label>Nazwa wycieczki</Form.Label>
+                            <Form.Label>Nazwa wycieczki*</Form.Label>
                             <Form.Control
                                 type="text"
                                 name="name"
@@ -159,12 +161,25 @@ export default function Trips() {
                                 required
                             />
                         </Form.Group>
+                        <Form.Group controlId="tripBudget" className="mb-3">
+                            <Form.Label>Planowany budżet*</Form.Label>
+                            <Form.Control
+                                type="number"
+                                name="budget"
+                                value={form.budget}
+                                onChange={handleChange}
+                                placeholder="np. 3000"
+                                required
+                                min="0"
+                                step="0.01"
+                            />
+                        </Form.Group>
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={() => setShowModal(false)} disabled={loading}>
                             Anuluj
                         </Button>
-                        <Button variant="primary" type="submit" disabled={loading || !form.name.trim()}>
+                        <Button variant="primary" type="submit" disabled={loading || !form.name.trim() || !form.budget.trim()}>
                             {loading ? 'Tworzenie...' : 'Utwórz'}
                         </Button>
                     </Modal.Footer>
