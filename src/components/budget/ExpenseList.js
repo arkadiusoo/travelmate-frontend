@@ -91,7 +91,7 @@ function ExpenseList({ tripId }) {
       const sharePercentage = share * 100;
       const shareAmount = expense.amount * share;
       const participantName = getParticipantName(userId);
-      const local_participantPaymentStatus = expense.participantPaymentStatus || {};
+      const participantPaymentStatus = expense.participantPaymentStatus || {};
 
 
       return {
@@ -99,7 +99,7 @@ function ExpenseList({ tripId }) {
         userName: participantName,
         share: sharePercentage,
         shareAmount: shareAmount,
-        isPaid: local_participantPaymentStatus[userId] || false
+        isPaid: participantPaymentStatus[userId] || false
       };
     });
   };
@@ -133,20 +133,31 @@ function ExpenseList({ tripId }) {
       headers: getAuthHeaders(),
       body: JSON.stringify(updates)
     })
-      .then(res => {
-        if (!res.ok) {
-          throw new Error('Nie udało się zaktualizować wydatku');
-        }
-        return res.json();
-      })
-      .then(updatedExpense => {
-        console.log('Expense updated:', updatedExpense);
-        // Optionally update local state if needed
-      })
-      .catch(err => {
-        console.error('Error updating expense:', err);
-        setError('Błąd podczas aktualizacji wydatku: ' + err.message);
-      });
+        .then(res => {
+          if (!res.ok) {
+            throw new Error('Nie udało się zaktualizować wydatku');
+          }
+          return res.json();
+        })
+        .then(updatedExpense => {
+          console.log('Expense updated:', updatedExpense);
+
+          // Update the local expenses state
+          setExpenses(prevExpenses => {
+            return prevExpenses.map(expense => {
+              if (expense.id === updatedExpense.id) {
+                // Update the participant payment status locally
+                const updatedParticipants = createParticipantsFromExpense(updatedExpense);
+                return { ...expense, participantPaymentStatus: updatedExpense.participantPaymentStatus, participants: updatedParticipants };
+              }
+              return expense;
+            });
+          });
+        })
+        .catch(err => {
+          console.error('Error updating expense:', err);
+          setError('Błąd podczas aktualizacji wydatku: ' + err.message);
+        });
   };
 
   // Fetch expenses for selected trip
