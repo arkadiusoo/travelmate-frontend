@@ -137,7 +137,7 @@ function BudgetSummary({ tripId }) {
                 <ListGroup.Item>
                     <strong>Planowany budżet:</strong>{" "}
                     <span className="float-end">
-                        {trip.tripBudget?.toFixed(2) || '0.00'} zł
+                        {trip && trip.tripBudget ? trip.tripBudget.toFixed(2) : 'Brak danych'} zł
                     </span>
                 </ListGroup.Item>
             </ListGroup>

@@ -381,6 +381,11 @@ export default function PlanTrip() {
                           style={{ cursor: 'pointer' }}
                       >
                         <Card.Body className="d-flex">
+                          <Button
+                              variant="outline-primary"
+                              size="sm"
+                              className="mb-2"
+                          >Dodaj wydatek</Button>
                           <div className="flex-grow-1 me-3">
                             <h5>{pt.title}</h5>
                             <small className="text-muted">
