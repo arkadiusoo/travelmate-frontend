@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo} from 'react';
 import { Button, Card, Modal, Form, Spinner, InputGroup, Row, Col, ListGroup } from 'react-bootstrap';
-import { BsTrash, BsPencil, BsArrowDown } from 'react-icons/bs';
+import { BsTrash, BsPencil, BsArrowDown, BsCheckCircle, BsJournalText } from 'react-icons/bs';
 import {
   MapContainer,
   TileLayer,
@@ -84,8 +84,14 @@ export default function PlanTrip() {
     dateFrom: '',
     dateTo: ''
   });
+
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [noteContent, setNoteContent] = useState('');
+  const [notePointId, setNotePointId] = useState(null);
+
   // State for passing point data to ExpenseForm
   const [expenseFormData, setExpenseFormData] = useState(null);
+
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -117,7 +123,9 @@ export default function PlanTrip() {
     setSearch(value);
     const len = value.length;
     if (len >= 3) {
-      fetch(`${API_BASE}/places/search?q=${encodeURIComponent(value)}`)
+      fetch(`${API_BASE}/places/search?q=${encodeURIComponent(value)}`, {
+        headers: getAuthHeaders()
+      })
           .then(res => res.json())
           .then(data => {
             if (data.predictions) {
@@ -135,7 +143,9 @@ export default function PlanTrip() {
   };
 
   const handleSuggestionClick = (s) => {
-    fetch(`${API_BASE}/places/details?placeId=${s.placeId}`)
+    fetch(`${API_BASE}/places/details?placeId=${s.placeId}`, {
+      headers: getAuthHeaders()
+    })
         .then(res => res.json())
         .then(result => {
           const location = result.result.geometry.location;
@@ -206,6 +216,13 @@ export default function PlanTrip() {
   };
 
 
+  const openNoteModal = (pointId) => {
+    setNotePointId(pointId);
+    setNoteContent('');
+    setShowNoteModal(true);
+  };  
+
+
   const openEdit = (pt) => {
     setPosition(pt.position);
     setForm({ title: pt.title, date: pt.date, description: pt.description });
@@ -216,6 +233,23 @@ export default function PlanTrip() {
 
   const handleChange = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
+  const handleMarkVisited = (e) => {
+    if (!token) return;
+  
+    fetch(`${API_BASE}/trips/${tripId}/points/${e}/visited`, {
+      method: 'PATCH',
+      headers: getAuthHeaders()
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Błąd oznaczania punktu jako odwiedzonego");
+        return res.json();
+      })
+      .then(updated => {
+        setPoints(prev => prev.map(p => p.id === e ? { ...p, visited: true } : p));
+      })
+      .catch(console.error);
+  };
+
   const handleSave = (e) => {
     e.preventDefault();
     if (!form.title || !form.date || !position || !token) return; // ✅ Check for token
@@ -225,7 +259,8 @@ export default function PlanTrip() {
       date: form.date,
       description: form.description,
       latitude: position.lat,
-      longitude: position.lng
+      longitude: position.lng,
+      visited: false
     };
     const url = `${API_BASE}/trips/${tripId}/points${editingId ? `/${editingId}` : ''}`;
     const method = editingId ? 'PUT' : 'POST';
@@ -278,17 +313,42 @@ export default function PlanTrip() {
   useEffect(() => {
     if (!filterDate || displayPoints.length < 2) {
       if (routeCoords.length > 0 || routeDistance !== null) {
-        setRouteCoords([]);  // reset if ther is something to reset
+        setRouteCoords([]);
         setRouteDistance(null);
       }
       return;
     }
-
-    const coords = displayPoints.map(p => `${p.position.lng},${p.position.lat}`).join(';');
-
-    // check if there is any difference
-    if (coords !== previousCoordsRef.current) {
-      fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`)
+  
+    // Budujemy trasę, ignorując tylko odcinki gdzie oba punkty są 'visited'
+    const segments = [];
+    const coordsForApi = [];
+  
+    for (let i = 0; i < displayPoints.length - 1; i++) {
+      const curr = displayPoints[i];
+      const next = displayPoints[i + 1];
+  
+      // Dodajemy odcinek tylko jeśli NIE są oba odwiedzone
+      if (!(curr.visited && next.visited)) {
+        segments.push([curr, next]);
+        coordsForApi.push(curr.position);
+      }
+    }
+  
+    // Dodaj ostatni punkt jeśli istnieje przynajmniej jeden segment
+    if (segments.length > 0) {
+      coordsForApi.push(segments[segments.length - 1][1].position);
+    }
+  
+    if (coordsForApi.length < 2) {
+      setRouteCoords([]);
+      setRouteDistance(null);
+      return;
+    }
+  
+    const coordsString = coordsForApi.map(p => `${p.lng},${p.lat}`).join(';');
+  
+    if (coordsString !== previousCoordsRef.current) {
+      fetch(`https://router.project-osrm.org/route/v1/walking/${coordsString}?overview=full&geometries=geojson`)
         .then(res => res.json())
         .then(data => {
           if (data.routes?.length) {
@@ -299,11 +359,11 @@ export default function PlanTrip() {
           }
         })
         .catch(console.error);
-
-      // update coords
-      previousCoordsRef.current = coords;
+  
+      previousCoordsRef.current = coordsString;
     }
   }, [displayPoints, filterDate]);
+  
 
 
   useEffect(() => {
@@ -391,7 +451,7 @@ export default function PlanTrip() {
                 ) : displayPoints.map((pt, idx) => (
                     <div key={pt.id} className="d-flex flex-column align-items-center mb-4">
                       <Card
-                          className={`shadow-sm w-75 ${new Date(pt.date) < new Date(today) ? 'bg-light text-muted' : ''}`}
+                          className={`shadow-sm w-100 ${new Date(pt.date) < new Date(today) ? 'bg-light text-muted' : ''}`}
                           onClick={() => handleZoomToPoint(pt)}
                           style={{ cursor: 'pointer' }}
                       >
@@ -403,29 +463,26 @@ export default function PlanTrip() {
                               onClick={() => handleAddExpense(pt)}
                           >Dodaj wydatek</Button>
                           <div className="flex-grow-1 me-3">
-                            <h5>{pt.title}</h5>
+                          <h5 className={pt.visited ? 'text-success' : ''}>{pt.title}</h5>
                             <small className="text-muted">
                               {new Date(pt.date).toLocaleDateString('pl-PL')}
                             </small>
                             <p className="mt-2 mb-0">{pt.description}</p>
                           </div>
-                          <div className="d-flex flex-column align-items-end">
-                            <Button
-                                variant="outline-primary"
-                                size="sm"
-                                className="mb-2"
-                                onClick={e => { e.stopPropagation(); openEdit(pt); }}
-                            >
-                              <BsPencil />
-                            </Button>
-                            <Button
-                                variant="outline-danger"
-                                size="sm"
-                                onClick={e => handleRemove(e, pt.id)}
-                            >
-                              <BsTrash />
-                            </Button>
-                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+      <Button variant="outline-primary" size="sm" onClick={e => { e.stopPropagation(); openEdit(pt); }} title="Edytuj">
+        <BsPencil />
+      </Button>
+      <Button variant="outline-danger" size="sm" onClick={e => handleRemove(e, pt.id)} title="Usuń">
+        <BsTrash />
+      </Button>
+      <Button variant="outline-success" size="sm" title="Oznacz jako odwiedzone" onClick={e => { e.stopPropagation(); handleMarkVisited(pt.id); }} disabled={pt.visited}>
+        <BsCheckCircle /> 
+      </Button>
+      <Button variant="outline-warning" size="sm" style={{ minWidth: '30px' }} onClick={() => openNoteModal(pt.id)} title="Notatki">
+        <BsJournalText />
+      </Button>
+    </div>
                         </Card.Body>
 
                       </Card>
@@ -576,12 +633,11 @@ export default function PlanTrip() {
                   fetch(`${API_BASE}/chat`, {
                     method: 'POST',
                     headers: getAuthHeaders(),
-                    body: JSON.stringify({ prompt })
+                    body: JSON.stringify({ prompt, tripId })
                   })
                       .then(res => res.json())
                       .then(data => {
                         const newPoints = data.map(p => ({
-                          id: crypto.randomUUID(),
                           title: p.name,
                           description: p.address,
                           date: p.date,
@@ -590,7 +646,31 @@ export default function PlanTrip() {
                           longitude: p.lng
                         }));
 
-                        setPoints(prev => [...prev, ...newPoints].sort((a, b) => new Date(a.date) - new Date(b.date)));
+                        Promise.all(
+                          newPoints.map(p =>
+                            fetch(`${API_BASE}/trips/${tripId}/points`, {
+                              method: 'POST',
+                              headers: getAuthHeaders(),
+                              body: JSON.stringify({
+                                title: p.title,
+                                date: p.date,
+                                description: p.description,
+                                latitude: p.latitude,
+                                longitude: p.longitude,
+                                visited: false
+                              })
+                            }).then(res => res.json())
+                          )
+                        )
+                          .then(savedPoints => {
+                            setPoints(prev =>
+                              [...prev, ...savedPoints.map(p => ({
+                                ...p,
+                                position: { lat: p.latitude, lng: p.longitude }
+                              }))].sort((a, b) => new Date(a.date) - new Date(b.date))
+                            );
+                          })
+                          .catch(console.error);
                       })
                       .catch(console.error);
 
@@ -602,6 +682,56 @@ export default function PlanTrip() {
             </Button>
           </Modal.Footer>
         </Modal>
+
+        <Modal show={showNoteModal} onHide={() => setShowNoteModal(false)} centered>
+  <Modal.Header closeButton>
+    <Modal.Title>Dodaj notatkę</Modal.Title>
+  </Modal.Header>
+  <Modal.Body>
+    <Form>
+      <Form.Group>
+        <Form.Label>Treść notatki</Form.Label>
+        <Form.Control
+          as="textarea"
+          rows={4}
+          value={noteContent}
+          onChange={(e) => setNoteContent(e.target.value)}
+        />
+      </Form.Group>
+    </Form>
+  </Modal.Body>
+  <Modal.Footer>
+    <Button variant="secondary" onClick={() => setShowNoteModal(false)}>Anuluj</Button>
+    <Button
+      variant="primary"
+      onClick={() => {
+        fetch(`${API_BASE}/notes/add?tripId=${tripId}`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            author: "Szymon", //
+            content: noteContent,
+            date: new Date().toISOString()
+          })
+        })
+        .then(res => {
+          if (!res.ok) throw new Error("Błąd dodawania notatki");
+          return res.text();
+        })
+        .then(msg => {
+          alert(msg);
+          setShowNoteModal(false);
+        })
+        .catch(console.error);
+      }}
+      disabled={!noteContent.trim()}
+    >
+      Zapisz
+    </Button>
+  </Modal.Footer>
+</Modal>
+
+
         <WideModalWrapper
             show={showModalExpense}
             onClose={() => setShowModalExpense(false)}
@@ -616,6 +746,7 @@ export default function PlanTrip() {
               />
           )}
         </WideModalWrapper>
+
       </MainLayout>
   );
 }
