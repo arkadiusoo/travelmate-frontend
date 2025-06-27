@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Alert, Spinner } from "react-bootstrap";
+import { Table, Button, Alert, Spinner, Modal } from "react-bootstrap";
 import { useAuth } from "../../contexts/AuthContext";
+import BarChartComponent from "../BarChartComponent";
 
 function ExpenseList({ tripId }) {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [paymentStatus, setPaymentStatus] = useState({});
+  const [participantPaymentStatus, setParticipantPaymentStatus] = useState({});
   const [userRole, setUserRole] = useState(null); // ✅ NEW: Track user role in trip
   const { token, user } = useAuth();
   const [participants, setParticipants] = useState([]);
   const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
+
+  const [showModalPlot, setShowModalPlot] = useState(false);
 
   const getAuthHeaders = () => ({
     'Authorization': `Bearer ${token}`,
@@ -91,29 +94,76 @@ function ExpenseList({ tripId }) {
       const sharePercentage = share * 100;
       const shareAmount = expense.amount * share;
       const participantName = getParticipantName(userId);
+      const participantPaymentStatus = expense.participantPaymentStatus || {};
+
 
       return {
         userId,
         userName: participantName,
         share: sharePercentage,
         shareAmount: shareAmount,
-        isPaid: paymentStatus[`${expense.id}-${userId}`] || false
+        isPaid: participantPaymentStatus[userId] || false
       };
     });
   };
 
-  // ✅ NEW: Toggle payment status locally
-  const togglePaid = (expenseId, participantId) => {
+  // ✅ NEW: Toggle payment status and update server
+  const togglePaid = (expenseId, participantId, isPaid) => {
+    if (!window.confirm('Czy na pewno chcesz potwierdzić opłacenie?')) {
+      return;
+    }
+    if (isPaid) {
+      return;
+    }
     if (!canManagePayments()) {
       alert('Nie masz uprawnień do zarządzania płatnościami. Tylko członkowie i organizatorzy mogą to robić.');
       return;
     }
 
     const key = `${expenseId}-${participantId}`;
-    setPaymentStatus(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+    setParticipantPaymentStatus(prev => {
+      const updated = { ...prev, [key]: true }; // Always mark as paid
+      return updated;
+    });
+
+    // Prepare the PATCH request data
+    const updates = {
+      participantPaymentStatus: {
+        [participantId]: true // Remove participant's share from the expense
+      }
+    };
+
+    // Send PATCH request to update on the server
+    fetch(`${API_BASE}/trips/${tripId}/expenses/${expenseId}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(updates)
+    })
+        .then(res => {
+          if (!res.ok) {
+            throw new Error('Nie udało się zaktualizować wydatku');
+          }
+          return res.json();
+        })
+        .then(updatedExpense => {
+          console.log('Expense updated:', updatedExpense);
+
+          // Update the local expenses state
+          setExpenses(prevExpenses => {
+            return prevExpenses.map(expense => {
+              if (expense.id === updatedExpense.id) {
+                // Update the participant payment status locally
+                const updatedParticipants = createParticipantsFromExpense(updatedExpense);
+                return { ...expense, participantPaymentStatus: updatedExpense.participantPaymentStatus, participants: updatedParticipants };
+              }
+              return expense;
+            });
+          });
+        })
+        .catch(err => {
+          console.error('Error updating expense:', err);
+          setError('Błąd podczas aktualizacji wydatku: ' + err.message);
+        });
   };
 
   // Fetch expenses for selected trip
@@ -178,7 +228,7 @@ function ExpenseList({ tripId }) {
       setExpenses(prev => prev.filter(expense => expense.id !== expenseId));
 
       // Clean up payment status for deleted expense
-      setPaymentStatus(prev => {
+      setParticipantPaymentStatus(prev => {
         const updated = { ...prev };
         Object.keys(updated).forEach(key => {
           if (key.startsWith(expenseId)) {
@@ -196,11 +246,11 @@ function ExpenseList({ tripId }) {
   // ✅ NEW: Get category display
   const getCategoryDisplay = (category) => {
     const categoryMap = {
-      'TRANSPORT': '🚗 Transport',
-      'FOOD': '🍽️ Jedzenie',
-      'ACCOMMODATION': '🏨 Noclegi',
-      'ACTIVITIES': '🎯 Atrakcje',
-      'OTHER': '📝 Inne'
+      'TRANSPORT': 'Transport',
+      'FOOD': 'Jedzenie',
+      'ACCOMMODATION': 'Noclegi',
+      'ACTIVITIES': 'Atrakcje',
+      'OTHER': 'Inne'
     };
     return categoryMap[category] || category;
   };
@@ -244,8 +294,9 @@ function ExpenseList({ tripId }) {
           <thead>
           <tr>
             <th>Nazwa</th>
+            <th>Kategoria</th>
             <th>Kwota</th>
-            <th>Opłacone przez</th>
+            <th>Płatnik</th>
             <th>Uczestnicy</th>
             {canDeleteExpenses() && <th>Akcje</th>} {/* ✅ Only show for ORGANIZER */}
           </tr>
@@ -258,13 +309,18 @@ function ExpenseList({ tripId }) {
                 <tr key={expense.id}>
                   <td>
                     <div>
-                      <strong>{getCategoryDisplay(expense.category)}</strong>
+                      <strong>{expense.name}</strong>
                     </div>
                     {expense.description && (
                         <div className="text-muted small mt-1">{expense.description}</div>
                     )}
                     <div className="text-muted small">
                       {new Date(expense.date).toLocaleDateString('pl-PL')}
+                    </div>
+                  </td>
+                  <td>
+                    <div>
+                      <strong>{getCategoryDisplay(expense.category)}</strong>
                     </div>
                   </td>
                   <td>
@@ -280,7 +336,7 @@ function ExpenseList({ tripId }) {
                                   variant={participant.isPaid ? "success" : "outline-secondary"}
                                   size="sm"
                                   className="text-start"
-                                  onClick={() => togglePaid(expense.id, participant.userId)}
+                                  onClick={() => togglePaid(expense.id, participant.userId, participant.isPaid)}
                                   disabled={!canManagePayments()} // ✅ Disable for GUEST
                                   title={!canManagePayments() ? "Nie masz uprawnień do zarządzania płatnościami" : ""}
                               >
@@ -320,7 +376,7 @@ function ExpenseList({ tripId }) {
           </tbody>
         </Table>
 
-        <div className="mt-3 p-2 bg-light rounded small">
+        <div className="mt-3 p-2 rounded small">
           <div className="d-flex justify-content-between">
             <span>Łączna liczba wydatków:</span>
             <span><strong>{expenses.length}</strong></span>
@@ -331,7 +387,25 @@ function ExpenseList({ tripId }) {
               {expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0).toFixed(2)} zł
             </strong></span>
           </div>
+          <Button
+              variant="primary"
+              className="w-100 mb-3"
+              onClick={() => setShowModalPlot(true)}
+          >
+            📈Pokaż wykres
+          </Button>
         </div>
+
+        <Modal show={showModalPlot} onHide={() => setShowModalPlot(false)} size="lg">
+          <Modal.Header closeButton>
+            <Modal.Title>Wykres wydatków</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div>
+              <BarChartComponent expenses={expenses} />
+            </div>
+          </Modal.Body>
+        </Modal>
       </>
   );
 }

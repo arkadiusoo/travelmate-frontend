@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Form, Button, Row, Col, Container, Alert, Spinner } from "react-bootstrap";
 import { useAuth } from "../../contexts/AuthContext";
 
-function ExpenseForm({ tripId, onSuccess }) {
+function ExpenseForm({ tripId, onSuccess, name = "", externalDate = "", onClose }) {
+  console.log('ExpenseForm props:', tripId, onSuccess, name, externalDate);
   const [customSplit, setCustomSplit] = useState(false);
   const [participants, setParticipants] = useState([]);
   const [activeParticipants, setActiveParticipants] = useState({});
@@ -11,8 +12,10 @@ function ExpenseForm({ tripId, onSuccess }) {
     amount: "",
     category: "OTHER",
     description: "",
-    date: new Date().toISOString().split('T')[0],
+    date: externalDate || new Date().toISOString().split('T')[0],
     payerId: "",
+    name: name || "",
+    externalDate: externalDate || "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -135,9 +138,12 @@ function ExpenseForm({ tripId, onSuccess }) {
   };
 
   const handleShareChange = (userId, value) => {
-    const numericValue = parseFloat(value) || 0;
-    const updatedActive = { ...activeParticipants };
+    const numericValue = parseFloat(value);
+    if (isNaN(numericValue) || numericValue < 0 || numericValue > 100) {
+        return;
+    }
 
+    const updatedActive = { ...activeParticipants };
     if (numericValue === 0) {
       updatedActive[userId] = false;
     } else {
@@ -182,12 +188,14 @@ function ExpenseForm({ tripId, onSuccess }) {
 
     // Convert percentage shares to decimal shares (0.0 to 1.0)
     const activeSharesInDecimal = {};
+    const activePaymentStatus = {};
     const activeUserIds = Object.entries(activeParticipants)
         .filter(([_, isActive]) => isActive)
         .map(([userId]) => userId);
 
     for (const userId of activeUserIds) {
       activeSharesInDecimal[userId] = (shares[userId] || 0) / 100;
+      activePaymentStatus[userId] = false;
     }
 
     // Validate shares sum to 100%
@@ -203,13 +211,15 @@ function ExpenseForm({ tripId, onSuccess }) {
 
     // Create expense data matching ExpenseDTO structure
     const expenseData = {
+      name: formData.name,
       amount: numericAmount,
       category: formData.category,
       description: formData.description || "",
       date: formData.date,
       payerId: formData.payerId,
       participantShares: activeSharesInDecimal,
-      tripId: tripId
+      tripId: tripId,
+      participantPaymentStatus: activePaymentStatus,
     };
 
     console.log('Sending expense data:', expenseData);
@@ -235,10 +245,12 @@ function ExpenseForm({ tripId, onSuccess }) {
         amount: "",
         category: "OTHER",
         description: "",
-        date: new Date().toISOString().split('T')[0],
+        date: externalDate || new Date().toISOString().split('T')[0],
         payerId: "",
+        name: name || "",
+        externalDate: externalDate || "",
       });
-
+      onClose();
       // Reset participants to initial state
       if (participants.length > 0) {
         initializeParticipantStates(participants);
@@ -289,7 +301,18 @@ function ExpenseForm({ tripId, onSuccess }) {
           <Row>
             <Col md={6}>
               {error && <Alert variant="danger">{error}</Alert>}
-
+              <Form.Group className="mb-3">
+                <Form.Label>Nazwa wydatku *</Form.Label>
+                <Form.Control
+                    type="text"
+                    name="name"
+                    placeholder="np. Hotel XYZ"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                    // disabled={formData.name && formData.externalDate}
+                />
+              </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label>Kwota (zł) *</Form.Label>
                 <Form.Control
@@ -328,6 +351,7 @@ function ExpenseForm({ tripId, onSuccess }) {
                     value={formData.date}
                     onChange={handleInputChange}
                     required
+                    disabled={formData.externalDate}
                 />
               </Form.Group>
 
@@ -365,6 +389,7 @@ function ExpenseForm({ tripId, onSuccess }) {
                   variant="primary"
                   className="w-100"
                   disabled={loading}
+                  onClick={(e) => handleSubmit(e)}
               >
                 {loading ? (
                     <>
@@ -406,11 +431,8 @@ function ExpenseForm({ tripId, onSuccess }) {
                         </Col>
                         <Col xs={4}>
                           <Form.Control
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              max="100"
-                              value={(shares[userId] || 0).toFixed(2)}
+                              type="text"
+                              value={(shares[userId] || 0)}
                               disabled={!customSplit || !activeParticipants[userId]}
                               onChange={(e) => handleShareChange(userId, e.target.value)}
                           />
@@ -427,7 +449,7 @@ function ExpenseForm({ tripId, onSuccess }) {
                   );
                 })}
 
-                <div className="mt-3 p-2 bg-light rounded">
+                <div className="mt-3 p-2 rounded">
                   <strong>
                     Suma udziałów: {Object.values(shares).reduce((sum, val) => sum + (val || 0), 0).toFixed(1)}%
                   </strong>

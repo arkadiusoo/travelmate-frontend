@@ -158,20 +158,20 @@ function BudgetPage() {
 
                 <Row className="mb-4">
                   <Col md={4}>
-                    <Card className="shadow-sm mb-4">
+                    <Button
+                        variant="primary"
+                        className="w-100 mb-3"
+
+                        onClick={() => setShowModal(true)}
+                    >
+                      ➕ Dodaj wydatek
+                    </Button>
+                    <Card className="shadow-sm mbt-3 mb-4">
                       <Card.Body>
                         <h5 className="mb-3">📊 Podsumowanie budżetu</h5>
                         <BudgetSummary tripId={selectedTripId} key={`summary-${refreshTrigger}`} />
                       </Card.Body>
                     </Card>
-
-                    <Button
-                        variant="primary"
-                        className="w-100"
-                        onClick={() => setShowModal(true)}
-                    >
-                      ➕ Dodaj wydatek
-                    </Button>
                   </Col>
 
                   <Col md={8}>
@@ -194,6 +194,7 @@ function BudgetPage() {
             <ExpenseForm
                 tripId={selectedTripId}
                 onSuccess={handleExpenseAdded}
+                onClose={() => setShowModal(false)}
             />
           </WideModalWrapper>
         </Container>
