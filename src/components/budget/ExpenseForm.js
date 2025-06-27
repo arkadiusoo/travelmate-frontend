@@ -449,7 +449,7 @@ function ExpenseForm({ tripId, onSuccess, name = "", externalDate = "", onClose 
                   );
                 })}
 
-                <div className="mt-3 p-2 bg-light rounded">
+                <div className="mt-3 p-2 rounded">
                   <strong>
                     Suma udziałów: {Object.values(shares).reduce((sum, val) => sum + (val || 0), 0).toFixed(1)}%
                   </strong>

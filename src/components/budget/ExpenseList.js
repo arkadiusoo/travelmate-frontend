@@ -376,7 +376,7 @@ function ExpenseList({ tripId }) {
           </tbody>
         </Table>
 
-        <div className="mt-3 p-2 bg-light rounded small">
+        <div className="mt-3 p-2 rounded small">
           <div className="d-flex justify-content-between">
             <span>Łączna liczba wydatków:</span>
             <span><strong>{expenses.length}</strong></span>

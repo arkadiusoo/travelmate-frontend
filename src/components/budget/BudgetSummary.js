@@ -209,7 +209,7 @@ function BudgetSummary({ tripId }) {
                 </>
             )}
 
-            <div className="mt-3 p-2 bg-light rounded small">
+            <div className="mt-3 p-2 rounded small">
                 <div className="d-flex justify-content-between">
                     <span>Całkowity koszt:</span>
                     <span>{budgetSummary.totalTripCost?.toFixed(2) || '0.00'} zł</span>
