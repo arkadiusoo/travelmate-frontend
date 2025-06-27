@@ -613,7 +613,6 @@ export default function PlanTrip() {
                       .then(res => res.json())
                       .then(data => {
                         const newPoints = data.map(p => ({
-                          id: crypto.randomUUID(),
                           title: p.name,
                           description: p.address,
                           date: p.date,
@@ -622,7 +621,31 @@ export default function PlanTrip() {
                           longitude: p.lng
                         }));
 
-                        setPoints(prev => [...prev, ...newPoints].sort((a, b) => new Date(a.date) - new Date(b.date)));
+                        Promise.all(
+                          newPoints.map(p =>
+                            fetch(`${API_BASE}/trips/${tripId}/points`, {
+                              method: 'POST',
+                              headers: getAuthHeaders(),
+                              body: JSON.stringify({
+                                title: p.title,
+                                date: p.date,
+                                description: p.description,
+                                latitude: p.latitude,
+                                longitude: p.longitude,
+                                visited: false
+                              })
+                            }).then(res => res.json())
+                          )
+                        )
+                          .then(savedPoints => {
+                            setPoints(prev =>
+                              [...prev, ...savedPoints.map(p => ({
+                                ...p,
+                                position: { lat: p.latitude, lng: p.longitude }
+                              }))].sort((a, b) => new Date(a.date) - new Date(b.date))
+                            );
+                          })
+                          .catch(console.error);
                       })
                       .catch(console.error);
 
