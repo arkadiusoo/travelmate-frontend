@@ -15,6 +15,8 @@ import { useAuth } from '../contexts/AuthContext'; // ✅ Import useAuth
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import MainLayout from '../layouts/MainLayout';
+import WideModalWrapper from "../components/WideModalWrapper";
+import ExpenseForm from "../components/budget/ExpenseForm";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -64,6 +66,7 @@ export default function PlanTrip() {
   const [tripName, setTripName] = useState('');
   const [points, setPoints] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [showModalExpense, setShowModalExpense] = useState(false);
   const [form, setForm] = useState({ title: '', date: '', description: '' });
   const [position, setPosition] = useState(null);
   const [loadingName, setLoadingName] = useState(false);
@@ -81,6 +84,8 @@ export default function PlanTrip() {
     dateFrom: '',
     dateTo: ''
   });
+  // State for passing point data to ExpenseForm
+  const [expenseFormData, setExpenseFormData] = useState(null);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -200,6 +205,7 @@ export default function PlanTrip() {
     setLoadingName(false);
   };
 
+
   const openEdit = (pt) => {
     setPosition(pt.position);
     setForm({ title: pt.title, date: pt.date, description: pt.description });
@@ -314,7 +320,16 @@ export default function PlanTrip() {
     }
     map.flyTo([pt.position.lat, pt.position.lng], 13);
   };
-
+  const handleAddExpense = (pt) => {
+    // Pass point data to the ExpenseForm component
+    setExpenseFormData({
+      title: pt.title,
+      date: pt.date,
+      description: pt.description,
+      pointId: pt.id
+    });
+    setShowModalExpense(true);
+  }
   // ✅ Add loading state for authentication
   if (!token) {
     return (
@@ -381,6 +396,12 @@ export default function PlanTrip() {
                           style={{ cursor: 'pointer' }}
                       >
                         <Card.Body className="d-flex">
+                          <Button
+                              variant="outline-primary"
+                              size="sm"
+                              className="mb-2"
+                              onClick={() => handleAddExpense(pt)}
+                          >Dodaj wydatek</Button>
                           <div className="flex-grow-1 me-3">
                             <h5>{pt.title}</h5>
                             <small className="text-muted">
@@ -581,6 +602,20 @@ export default function PlanTrip() {
             </Button>
           </Modal.Footer>
         </Modal>
+        <WideModalWrapper
+            show={showModalExpense}
+            onClose={() => setShowModalExpense(false)}
+            title="Dodaj wydatek"
+        >
+          {expenseFormData && (
+              <ExpenseForm
+                  tripId={tripId}
+                  onClose={() => setShowModalExpense(false)}
+                  externalDate={expenseFormData.date}
+                  name={expenseFormData.title}
+              />
+          )}
+        </WideModalWrapper>
       </MainLayout>
   );
 }
