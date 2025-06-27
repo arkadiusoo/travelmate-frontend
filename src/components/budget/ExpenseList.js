@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Alert, Spinner } from "react-bootstrap";
+import { Table, Button, Alert, Spinner, Modal } from "react-bootstrap";
 import { useAuth } from "../../contexts/AuthContext";
+import BarChartComponent from "../BarChartComponent";
 
 function ExpenseList({ tripId }) {
   const [expenses, setExpenses] = useState([]);
@@ -11,6 +12,8 @@ function ExpenseList({ tripId }) {
   const { token, user } = useAuth();
   const [participants, setParticipants] = useState([]);
   const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
+
+  const [showModalPlot, setShowModalPlot] = useState(false);
 
   const getAuthHeaders = () => ({
     'Authorization': `Bearer ${token}`,
@@ -384,7 +387,25 @@ function ExpenseList({ tripId }) {
               {expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0).toFixed(2)} zł
             </strong></span>
           </div>
+          <Button
+              variant="primary"
+              className="w-100 mb-3"
+              onClick={() => setShowModalPlot(true)}
+          >
+            📈Pokaż wykres
+          </Button>
         </div>
+
+        <Modal show={showModalPlot} onHide={() => setShowModalPlot(false)} size="lg">
+          <Modal.Header closeButton>
+            <Modal.Title>Wykres wydatków</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div>
+              <BarChartComponent expenses={expenses} />
+            </div>
+          </Modal.Body>
+        </Modal>
       </>
   );
 }
