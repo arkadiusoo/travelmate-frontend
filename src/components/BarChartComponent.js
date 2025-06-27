@@ -6,8 +6,12 @@ const BarChartComponent = ({ expenses }) => {
     const data = expenses.map(expense => ({
         date: new Date(expense.date).toLocaleDateString(),  // Format date
         amount: expense.amount,
-        name: expense.name
+        name: expense.name,
+        tripBudget: expense.tripBudget,
     }));
+
+    // Calculate the total amount
+    const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0).toFixed(2);
 
     // Custom tooltip component
     const CustomTooltip = ({ active, payload, label }) => {
@@ -29,16 +33,23 @@ const BarChartComponent = ({ expenses }) => {
     };
 
     return (
-        <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
-                <Bar dataKey="amount" fill="#8884d8" />
-            </BarChart>
-        </ResponsiveContainer>
+        <div>
+            {/* Display total amount above the chart */}
+            <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                <strong>Łączna kwota wydatków: {totalAmount} zł</strong>
+            </div>
+
+            <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={data}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Bar dataKey="amount" fill="#085ED7" name="Kwota" />
+                </BarChart>
+            </ResponsiveContainer>
+        </div>
     );
 };
 

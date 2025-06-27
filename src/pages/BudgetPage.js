@@ -194,6 +194,7 @@ function BudgetPage() {
             <ExpenseForm
                 tripId={selectedTripId}
                 onSuccess={handleExpenseAdded}
+                onClose={() => setShowModal(false)}
             />
           </WideModalWrapper>
         </Container>
