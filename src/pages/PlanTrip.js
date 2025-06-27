@@ -66,6 +66,7 @@ export default function PlanTrip() {
   const [tripName, setTripName] = useState('');
   const [points, setPoints] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [showModalExpense, setShowModalExpense] = useState(false);
   const [form, setForm] = useState({ title: '', date: '', description: '' });
   const [position, setPosition] = useState(null);
   const [loadingName, setLoadingName] = useState(false);
@@ -327,7 +328,7 @@ export default function PlanTrip() {
       description: pt.description,
       pointId: pt.id
     });
-    setShowModal(true);
+    setShowModalExpense(true);
   }
   // ✅ Add loading state for authentication
   if (!token) {
@@ -602,13 +603,14 @@ export default function PlanTrip() {
           </Modal.Footer>
         </Modal>
         <WideModalWrapper
-            show={showModal}
-            onClose={() => setShowModal(false)}
+            show={showModalExpense}
+            onClose={() => setShowModalExpense(false)}
             title="Dodaj wydatek"
         >
           {expenseFormData && (
               <ExpenseForm
                   tripId={tripId}
+                  onClose={() => setShowModalExpense(false)}
                   externalDate={expenseFormData.date}
                   name={expenseFormData.title}
               />

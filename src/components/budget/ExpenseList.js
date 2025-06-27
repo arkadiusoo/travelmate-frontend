@@ -106,6 +106,9 @@ function ExpenseList({ tripId }) {
 
   // ✅ NEW: Toggle payment status and update server
   const togglePaid = (expenseId, participantId, isPaid) => {
+    if (!window.confirm('Czy na pewno chcesz potwierdzić opłacenie?')) {
+      return;
+    }
     if (isPaid) {
       return;
     }

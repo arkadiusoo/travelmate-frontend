@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Form, Button, Row, Col, Container, Alert, Spinner } from "react-bootstrap";
 import { useAuth } from "../../contexts/AuthContext";
 
-function ExpenseForm({ tripId, onSuccess, name = "", externalDate = "" }) {
+function ExpenseForm({ tripId, onSuccess, name = "", externalDate = "", onClose }) {
   console.log('ExpenseForm props:', tripId, onSuccess, name, externalDate);
   const [customSplit, setCustomSplit] = useState(false);
   const [participants, setParticipants] = useState([]);
@@ -250,7 +250,7 @@ function ExpenseForm({ tripId, onSuccess, name = "", externalDate = "" }) {
         name: name || "",
         externalDate: externalDate || "",
       });
-
+      onClose();
       // Reset participants to initial state
       if (participants.length > 0) {
         initializeParticipantStates(participants);
@@ -310,7 +310,7 @@ function ExpenseForm({ tripId, onSuccess, name = "", externalDate = "" }) {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    disabled={formData.name && formData.externalDate}
+                    // disabled={formData.name && formData.externalDate}
                 />
               </Form.Group>
               <Form.Group className="mb-3">
@@ -389,6 +389,7 @@ function ExpenseForm({ tripId, onSuccess, name = "", externalDate = "" }) {
                   variant="primary"
                   className="w-100"
                   disabled={loading}
+                  onClick={(e) => handleSubmit(e)}
               >
                 {loading ? (
                     <>
@@ -431,7 +432,7 @@ function ExpenseForm({ tripId, onSuccess, name = "", externalDate = "" }) {
                         <Col xs={4}>
                           <Form.Control
                               type="text"
-                              value={(shares[userId] || 0).toFixed(1)}
+                              value={(shares[userId] || 0)}
                               disabled={!customSplit || !activeParticipants[userId]}
                               onChange={(e) => handleShareChange(userId, e.target.value)}
                           />
