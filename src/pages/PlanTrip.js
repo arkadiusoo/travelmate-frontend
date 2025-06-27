@@ -303,17 +303,42 @@ export default function PlanTrip() {
   useEffect(() => {
     if (!filterDate || displayPoints.length < 2) {
       if (routeCoords.length > 0 || routeDistance !== null) {
-        setRouteCoords([]);  // reset if ther is something to reset
+        setRouteCoords([]);
         setRouteDistance(null);
       }
       return;
     }
-
-    const coords = displayPoints.map(p => `${p.position.lng},${p.position.lat}`).join(';');
-
-    // check if there is any difference
-    if (coords !== previousCoordsRef.current) {
-      fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`)
+  
+    // Budujemy trasę, ignorując tylko odcinki gdzie oba punkty są 'visited'
+    const segments = [];
+    const coordsForApi = [];
+  
+    for (let i = 0; i < displayPoints.length - 1; i++) {
+      const curr = displayPoints[i];
+      const next = displayPoints[i + 1];
+  
+      // Dodajemy odcinek tylko jeśli NIE są oba odwiedzone
+      if (!(curr.visited && next.visited)) {
+        segments.push([curr, next]);
+        coordsForApi.push(curr.position);
+      }
+    }
+  
+    // Dodaj ostatni punkt jeśli istnieje przynajmniej jeden segment
+    if (segments.length > 0) {
+      coordsForApi.push(segments[segments.length - 1][1].position);
+    }
+  
+    if (coordsForApi.length < 2) {
+      setRouteCoords([]);
+      setRouteDistance(null);
+      return;
+    }
+  
+    const coordsString = coordsForApi.map(p => `${p.lng},${p.lat}`).join(';');
+  
+    if (coordsString !== previousCoordsRef.current) {
+      fetch(`https://router.project-osrm.org/route/v1/walking/${coordsString}?overview=full&geometries=geojson`)
         .then(res => res.json())
         .then(data => {
           if (data.routes?.length) {
@@ -324,11 +349,11 @@ export default function PlanTrip() {
           }
         })
         .catch(console.error);
-
-      // update coords
-      previousCoordsRef.current = coords;
+  
+      previousCoordsRef.current = coordsString;
     }
   }, [displayPoints, filterDate]);
+  
 
 
   useEffect(() => {
