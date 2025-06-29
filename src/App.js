@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import TripsPage from "./pages/TripsPage";
 import PlanTrip from "./pages/PlanTrip";
 import BudgetPage from "./pages/BudgetPage";
+import RaportsPage from "./pages/RaportsPage";
 import ParticipantsPage from './pages/ParticipantsPage';
 import ForgotPasswordForm from './components/ForgotPasswordForm';
 import ResetPasswordForm from './components/ResetPasswordForm';
@@ -52,6 +53,7 @@ function AppRoutes() {
                     <Route path="/trips/:id" element={<PlanTrip />} />
                     <Route path="/budget" element={<BudgetPage />} />
                     <Route path="/participants" element={<ParticipantsPage />} />
+                    <Route path="/raports" element={<RaportsPage />} />
 
                     {/* Redirect password reset routes to dashboard when authenticated */}
                     <Route path="/forgot-password" element={<Navigate to="/dashboard" />} />

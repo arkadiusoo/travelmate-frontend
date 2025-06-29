@@ -93,8 +93,14 @@ function Dashboard() {
             <Col md={6}>
               <Card className="shadow-sm">
                 <Card.Body>
-                  <Card.Title>🗺️ Podgląd trasy (mapa)</Card.Title>
-                  <Card.Text>Widok mapy planowanej podróży – wkrótce!</Card.Text>
+                  <Card.Title>Raporty z wycieczek</Card.Title>
+                  <Card.Text>Wygenerowane raporty z wycieczek</Card.Text>
+                  <Button
+                      variant="info"
+                      size="sm"
+                      className="w-100"
+                      onClick={() => navigate('/raports')}
+                  ></Button>
                 </Card.Body>
               </Card>
             </Col>
