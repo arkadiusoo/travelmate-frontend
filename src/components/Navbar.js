@@ -87,6 +87,15 @@ function NavigationBar({ onLoginClick }) {
 
                     <Button
                         variant="link"
+                        onClick={(e) => handleNavigation("/calendar", e)}
+                        className={`text-light p-2 text-decoration-none ${isActive("/calendar") ? "fw-bold" : ""}`}
+                        style={{ border: 'none' }}
+                    >
+                      Kalendarz
+                    </Button>
+
+                    <Button
+                        variant="link"
                         onClick={handleLogout}
                         className="text-light p-2 text-decoration-none"
                         style={{ border: 'none' }}

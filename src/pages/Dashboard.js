@@ -78,7 +78,6 @@ function Dashboard() {
                   </Card.Text>
                   <Button
                       variant="info"
-                      size="lg"
                       className="w-100"
                       onClick={() => navigate('/participants')}
                   >
@@ -102,7 +101,14 @@ function Dashboard() {
               <Card className="shadow-sm">
                 <Card.Body>
                   <Card.Title>📅 Synchronizacja z kalendarzem</Card.Title>
-                  <Card.Text>Integracja z Google Calendar – wkrótce!</Card.Text>
+                  <Card.Text>Integracja z Google Calendar.</Card.Text>
+                  <Button
+                      variant="info"
+                      className="w-100"
+                      onClick={() => navigate('/calendar')}
+                  >
+                    Zarządzaj kalendarzem
+                  </Button>
                 </Card.Body>
               </Card>
             </Col>
