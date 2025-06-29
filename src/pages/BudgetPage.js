@@ -16,7 +16,9 @@ function BudgetPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const { token } = useAuth();
+  const [userStatus, setUserStatus] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  const { token, user } = useAuth();
   const navigate = useNavigate();
   const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
 
@@ -77,6 +79,30 @@ function BudgetPage() {
           setError('Błąd ładowania szczegółów wycieczki');
         });
   }, [selectedTripId, token, API_BASE]);
+
+  useEffect(() => {
+    if (!selectedTripId || !token || !user?.email) {
+      setUserStatus(null);
+      setUserRole(null);
+      return;
+    }
+
+    fetch(`${API_BASE}/trips/${selectedTripId}/participants`, {
+      headers: getAuthHeaders()
+    })
+        .then(res => res.json())
+        .then(data => {
+          const currentUser = data.find(p => p.email === user.email);
+          if (currentUser) {
+            setUserStatus(currentUser.status);
+            setUserRole(currentUser.role);
+          } else {
+            setUserStatus(null);
+            setUserRole(null);
+          }
+        })
+        .catch(console.error);
+  }, [selectedTripId, token, user?.email]);
 
   const handleTripSelect = (tripId) => {
     setSelectedTripId(tripId);
@@ -161,10 +187,11 @@ function BudgetPage() {
                     <Button
                         variant="primary"
                         className="w-100 mb-3"
-
                         onClick={() => setShowModal(true)}
+                        disabled={userStatus !== 'ACCEPTED' || (userRole !== 'MEMBER' && userRole !== 'ORGANIZER')}
+                        title={userStatus !== 'ACCEPTED' ? 'Musisz zaakceptować zaproszenie aby dodawać wydatki' : ''}
                     >
-                      ➕ Dodaj wydatek
+                      {userStatus === 'PENDING' ? '⏳ Dodaj wydatek (oczekuje akceptacji)' : '➕ Dodaj wydatek'}
                     </Button>
                     <Card className="shadow-sm mbt-3 mb-4">
                       <Card.Body>

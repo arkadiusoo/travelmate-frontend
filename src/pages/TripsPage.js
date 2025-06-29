@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Row, Col, Modal, Form, Spinner } from 'react-bootstrap';
+import { Button, Card, Row, Col, Modal, Form, Spinner, Badge } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import MainLayout from '../layouts/MainLayout';
@@ -10,8 +10,9 @@ export default function Trips() {
     const [error, setError] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [form, setForm] = useState({ name: '', budget: '' });
+    const [tripStatuses, setTripStatuses] = useState({});
     const navigate = useNavigate();
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
 
     // Helper function to create authenticated headers
@@ -49,6 +50,39 @@ export default function Trips() {
             })
             .finally(() => setLoading(false));
     }, [token, API_BASE]);
+
+    useEffect(() => {
+        if (!trips.length || !token || !user?.email) return;
+
+        // Check user status for each trip
+        const statusPromises = trips.map(trip =>
+            fetch(`${API_BASE}/trips/${trip.id}/participants`, {
+                headers: getAuthHeaders()
+            })
+                .then(res => res.json())
+                .then(data => {
+                    const currentUser = data.find(p => p.email === user.email);
+                    return {
+                        tripId: trip.id,
+                        status: currentUser?.status || null,
+                        role: currentUser?.role || null
+                    };
+                })
+                .catch(() => ({
+                    tripId: trip.id,
+                    status: null,
+                    role: null
+                }))
+        );
+
+        Promise.all(statusPromises).then(statuses => {
+            const statusMap = {};
+            statuses.forEach(({ tripId, status, role }) => {
+                statusMap[tripId] = { status, role };
+            });
+            setTripStatuses(statusMap);
+        });
+    }, [trips, token, user?.email]);
 
     const handleChange = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -123,18 +157,41 @@ export default function Trips() {
             )}
 
             <Row>
-                {trips.map(trip => (
-                    <Col md={4} key={trip.id} className="mb-4">
-                        <Card className="shadow-sm h-100">
-                            <Card.Body>
-                                <Card.Title>{trip.name}</Card.Title>
-                                <Button as={Link} to={`/trips/${trip.id}`} variant="outline-primary">
-                                    Zobacz plan
-                                </Button>
-                            </Card.Body>
-                        </Card>
-                    </Col>
-                ))}
+                {trips.map(trip => {
+                    const tripStatus = tripStatuses[trip.id];
+                    const canViewTrip = tripStatus?.status === 'ACCEPTED';
+                    const isPending = tripStatus?.status === 'PENDING';
+
+                    return (
+                        <Col md={4} key={trip.id} className="mb-4">
+                            <Card className="shadow-sm h-100">
+                                <Card.Body>
+                                    <Card.Title>{trip.name}</Card.Title>
+
+                                    {isPending && (
+                                        <div className="mb-2">
+                                            <Badge bg="warning">⏳ Oczekuje na akceptację</Badge>
+                                        </div>
+                                    )}
+
+                                    {canViewTrip ? (
+                                        <Button as={Link} to={`/trips/${trip.id}`} variant="outline-primary">
+                                            Zobacz plan
+                                        </Button>
+                                    ) : isPending ? (
+                                        <Button variant="outline-secondary" disabled title="Musisz zaakceptować zaproszenie">
+                                            Zobacz plan (oczekuje akceptacji)
+                                        </Button>
+                                    ) : (
+                                        <Button as={Link} to={`/trips/${trip.id}`} variant="outline-primary">
+                                            Zobacz plan
+                                        </Button>
+                                    )}
+                                </Card.Body>
+                            </Card>
+                        </Col>
+                    );
+                })}
             </Row>
 
             {trips.length === 0 && !loading && !error && (

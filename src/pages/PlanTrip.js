@@ -53,7 +53,7 @@ function MapSetter({ setMap, setHasUserInteracted }) {
 
 export default function PlanTrip() {
   const { id: tripId } = useParams();
-  const { token } = useAuth(); // ✅ Get auth token
+  const { token, user } = useAuth(); // ✅ Get auth token
   const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
 
   // ✅ Add helper function for auth headers
@@ -89,9 +89,14 @@ export default function PlanTrip() {
   const [noteContent, setNoteContent] = useState('');
   const [notePointId, setNotePointId] = useState(null);
 
+
+
+
   // State for passing point data to ExpenseForm
   const [expenseFormData, setExpenseFormData] = useState(null);
 
+  const [userStatus, setUserStatus] = useState(null);
+  const [userRole, setUserRole] = useState(null);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -117,6 +122,24 @@ export default function PlanTrip() {
         }))))
         .catch(console.error);
   }, [tripId, token]); // ✅ Add token as dependency
+
+  useEffect(() => {
+    if (!tripId || !token) return;
+
+    fetch(`${API_BASE}/trips/${tripId}/participants`, {
+      headers: getAuthHeaders()
+    })
+        .then(res => res.json())
+        .then(data => {
+          const currentUser = data.find(p => p.email === user?.email);
+          if (currentUser) {
+            setUserStatus(currentUser.status);
+            setUserRole(currentUser.role);
+          }
+        })
+        .catch(console.error);
+  }, [tripId, token, user?.email]);
+
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
@@ -290,15 +313,27 @@ export default function PlanTrip() {
 
   const handleRemove = (e, id) => {
     e.stopPropagation();
-    if (!token) return; // ✅ Check for token
+    if (!token) return;
 
-    // ✅ Add auth headers to delete request
     fetch(`${API_BASE}/trips/${tripId}/points/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     })
-        .then(() => setPoints(prev => prev.filter(p => p.id !== id)))
-        .catch(console.error);
+        .then(response => {
+          if (!response.ok) {
+            // Handle non-2xx responses
+            return response.text().then(errorText => {
+              throw new Error(errorText || `HTTP error! status: ${response.status}`);
+            });
+          }
+          // Only remove from state if the request was successful
+          setPoints(prev => prev.filter(p => p.id !== id));
+        })
+        .catch(error => {
+          console.error('Error deleting point:', error);
+          // Show user-friendly error message
+          alert(`Nie można usunąć punktu: ${error.message.includes('permission') ? 'Brak uprawnień do usuwania punktów' : 'Wystąpił błąd'}`);
+        });
   };
 
   const dates = [...new Set(points.map(p => p.date))];
@@ -461,7 +496,11 @@ export default function PlanTrip() {
                               size="sm"
                               className="mb-2"
                               onClick={() => handleAddExpense(pt)}
-                          >Dodaj wydatek</Button>
+                              disabled={userStatus !== 'ACCEPTED' || (userRole !== 'MEMBER' && userRole !== 'ORGANIZER')}
+                              title={userStatus !== 'ACCEPTED' ? 'Musisz zaakceptować zaproszenie aby dodawać wydatki' : ''}
+                          >
+                            {userStatus === 'PENDING' ? '⏳ Dodaj wydatek (oczekuje akceptacji)' : 'Dodaj wydatek'}
+                          </Button>
                           <div className="flex-grow-1 me-3">
                           <h5 className={pt.visited ? 'text-success' : ''}>{pt.title}</h5>
                             <small className="text-muted">
