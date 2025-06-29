@@ -13,7 +13,7 @@ import {
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext'; // ✅ Import useAuth
 import 'leaflet/dist/leaflet.css';
-import L, { point } from 'leaflet';
+import L from 'leaflet';
 import MainLayout from '../layouts/MainLayout';
 import WideModalWrapper from "../components/WideModalWrapper";
 import ExpenseForm from "../components/budget/ExpenseForm";
@@ -53,7 +53,7 @@ function MapSetter({ setMap, setHasUserInteracted }) {
 
 export default function PlanTrip() {
   const { id: tripId } = useParams();
-  const { token, user } = useAuth(); // ✅ Get auth token
+  const { token } = useAuth(); // ✅ Get auth token
   const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
 
   // ✅ Add helper function for auth headers
@@ -88,7 +88,8 @@ export default function PlanTrip() {
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [noteContent, setNoteContent] = useState('');
   const [notePointId, setNotePointId] = useState(null);
-  const [notePointTitle, setNotePointTitle] = useState('');
+  const [showTripNoteModal, setShowTripNoteModal] = useState(false);
+  const [notes, setNotes] = useState([]);
 
   // State for passing point data to ExpenseForm
   const [expenseFormData, setExpenseFormData] = useState(null);
@@ -217,13 +218,15 @@ export default function PlanTrip() {
   };
 
 
-  const openNoteModal = (pt) => {
-    setNotePointId(pt.id);
-    setNotePointTitle(pt.title);
+  const openNoteModal = (pointId) => {
+    setNotePointId(pointId);
     setNoteContent('');
     setShowNoteModal(true);
-  };  
+  };
 
+  const openTripNoteModal = () => {
+    setShowTripNoteModal(true);
+  };
 
   const openEdit = (pt) => {
     setPosition(pt.position);
@@ -392,6 +395,18 @@ export default function PlanTrip() {
     });
     setShowModalExpense(true);
   }
+
+
+  const useTripNotes = () => {
+    useEffect(fetch(`${API_BASE}/trips/${tripId}`, {headers: getAuthHeaders(), method: 'Get'})
+        .then(res => res.json())
+        .then(data => {console.log(data); setNotes(data)}),[]);
+    return(
+        <div>
+          {notes.map((note) => (note.id))}
+        </div>
+    );
+  }
   // ✅ Add loading state for authentication
   if (!token) {
     return (
@@ -415,6 +430,13 @@ export default function PlanTrip() {
                     variant="success"
                     onClick={() => setShowAutoModal(true)}>
                   Generuj wycieczkę automatycznie
+                </Button>
+              </div>
+              <div className="d-flex justify-content-end mb-2">
+                <Button
+                    variant="success"
+                    onClick={() => setShowTripNoteModal(true)}>
+                  Zobacz notatki
                 </Button>
               </div>
               <Form.Label>Wyszukaj miejsce</Form.Label>
@@ -481,7 +503,7 @@ export default function PlanTrip() {
       <Button variant="outline-success" size="sm" title="Oznacz jako odwiedzone" onClick={e => { e.stopPropagation(); handleMarkVisited(pt.id); }} disabled={pt.visited}>
         <BsCheckCircle /> 
       </Button>
-      <Button variant="outline-warning" size="sm" style={{ minWidth: '30px' }} onClick={() => openNoteModal(pt)} title="Notatki">
+      <Button variant="outline-warning" size="sm" style={{ minWidth: '30px' }} onClick={() => openNoteModal(pt.id)} title="Notatki">
         <BsJournalText />
       </Button>
     </div>
@@ -711,10 +733,8 @@ export default function PlanTrip() {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify({
-            author: user?.email || 'anonim', //
+            author: "Szymon", //
             content: noteContent,
-            pointId: notePointId,
-            pointName: notePointTitle,
             date: new Date().toISOString()
           })
         })
@@ -734,6 +754,21 @@ export default function PlanTrip() {
     </Button>
   </Modal.Footer>
 </Modal>
+
+
+        <Modal show={showTripNoteModal} onHide={() => setShowTripNoteModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Wszystkie notatki</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Tutaj są notatki
+          {useTripNotes()}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowTripNoteModal(false)}>Zamknij</Button>
+
+        </Modal.Footer>
+      </Modal>
 
 
         <WideModalWrapper
