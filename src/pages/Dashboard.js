@@ -57,7 +57,7 @@ function Dashboard() {
                 <Card.Body>
                   <Card.Title>💰 Budżet i wydatki</Card.Title>
                   <Card.Text>
-                    Sprawdź bilans i rozlicz się z uczestnikami wyjazdu.
+                    Sprawdź bilans i rozlicz się ze wszystkimi uczestnikami wyjazdu.
                   </Card.Text>
                   <Button
                       variant="success"
@@ -78,7 +78,6 @@ function Dashboard() {
                   </Card.Text>
                   <Button
                       variant="info"
-                      size="lg"
                       className="w-100"
                       onClick={() => navigate('/participants')}
                   >
@@ -90,7 +89,9 @@ function Dashboard() {
           </Row>
 
           <Row className="mt-5">
+
             <Col md={6}>
+
               <Card className="shadow-sm">
                 <Card.Body>
                   <Card.Title>Raporty z wycieczek</Card.Title>
@@ -108,9 +109,18 @@ function Dashboard() {
             </Col>
             <Col md={6}>
               <Card className="shadow-sm">
+
+
                 <Card.Body>
                   <Card.Title>📅 Synchronizacja z kalendarzem</Card.Title>
-                  <Card.Text>Integracja z Google Calendar – wkrótce!</Card.Text>
+                  <Card.Text>Integracja z Google Calendar.</Card.Text>
+                  <Button
+                      variant="info"
+                      className="w-100"
+                      onClick={() => navigate('/calendar')}
+                  >
+                    Zarządzaj kalendarzem
+                  </Button>
                 </Card.Body>
               </Card>
             </Col>

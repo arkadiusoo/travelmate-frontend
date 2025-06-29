@@ -141,7 +141,6 @@ function BudgetSummary({ tripId }) {
                     </span>
                 </ListGroup.Item>
             </ListGroup>
-            <h6 className="text-center mb-3">Podsumowanie</h6>
 
             <ListGroup className="mb-3">
                 <ListGroup.Item>
@@ -152,73 +151,74 @@ function BudgetSummary({ tripId }) {
                 </ListGroup.Item>
             </ListGroup>
 
-            {budgetSummary.balance && Object.keys(budgetSummary.balance).length > 0 && (
-                <>
-                    <h6>Rozliczenia indywidualne:</h6>
-                    <ListGroup className="mb-3">
-                        {Object.entries(budgetSummary.balance)
-                            .sort(([,a], [,b]) => b - a)
-                            .map(([userId, balance]) => (
-                                <ListGroup.Item key={userId} className="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <div><strong>{getParticipantName(userId)}</strong></div>
-                                        <small className="text-muted">
-                                            Należy się: {budgetSummary.participantShare?.[userId]?.toFixed(2) || '0.00'} zł |
-                                            Zapłacił: {budgetSummary.actualPaid?.[userId]?.toFixed(2) || '0.00'} zł
-                                        </small>
-                                    </div>
-                                    <Badge bg={balance >= 0 ? "success" : "danger"}>
-                                        {balance >= 0
-                                            ? `+${balance.toFixed(2)} zł`
-                                            : `${balance.toFixed(2)} zł`}
-                                    </Badge>
-                                </ListGroup.Item>
-                            ))}
-                    </ListGroup>
-                </>
-            )}
+            {/*{budgetSummary.balance && Object.keys(budgetSummary.balance).length > 0 && (*/}
+            {/*    <>*/}
+            {/*        <h6>Rozliczenia indywidualne:</h6>*/}
+            {/*        <ListGroup className="mb-3">*/}
+            {/*            {Object.entries(budgetSummary.balance)*/}
+            {/*                .sort(([,a], [,b]) => b - a)*/}
+            {/*                .map(([userId, balance]) => (*/}
+            {/*                    <ListGroup.Item key={userId} className="d-flex justify-content-between align-items-center">*/}
+            {/*                        <div>*/}
+            {/*                            <div><strong>{getParticipantName(userId)}</strong></div>*/}
+            {/*                            <small className="text-muted">*/}
+            {/*                                Należy się: {budgetSummary.participantShare?.[userId]?.toFixed(2) || '0.00'} zł |*/}
+            {/*                                Zapłacił: {budgetSummary.actualPaid?.[userId]?.toFixed(2) || '0.00'} zł*/}
+            {/*                            </small>*/}
+            {/*                        </div>*/}
+            {/*                        <Badge bg={balance >= 0 ? "success" : "danger"}>*/}
+            {/*                            {balance >= 0*/}
+            {/*                                ? `+${balance.toFixed(2)} zł`*/}
+            {/*                                : `${balance.toFixed(2)} zł`}*/}
+            {/*                        </Badge>*/}
+            {/*                    </ListGroup.Item>*/}
+            {/*                ))}*/}
+            {/*        </ListGroup>*/}
+            {/*    </>*/}
+            {/*)}*/}
 
-            {/* Detailed breakdown if there are multiple participants */}
-            {budgetSummary.participantShare && Object.keys(budgetSummary.participantShare).length > 1 && (
-                <>
-                    <h6 className="mt-4">Szczegółowe rozliczenie:</h6>
-                    <ListGroup className="mb-3">
-                        {Object.entries(budgetSummary.participantShare).map(([userId, shareAmount]) => {
-                            const paidAmount = budgetSummary.actualPaid?.[userId] || 0;
-                            const balanceAmount = budgetSummary.balance?.[userId] || 0;
+            {/*/!* Detailed breakdown if there are multiple participants *!/*/}
+            {/*{budgetSummary.participantShare && Object.keys(budgetSummary.participantShare).length > 1 && (*/}
+            {/*    <>*/}
+            {/*        <h6 className="mt-4">Szczegółowe rozliczenie:</h6>*/}
+            {/*        <ListGroup className="mb-3">*/}
+            {/*            {Object.entries(budgetSummary.participantShare).map(([userId, shareAmount]) => {*/}
+            {/*                const paidAmount = budgetSummary.actualPaid?.[userId] || 0;*/}
+            {/*                const balanceAmount = budgetSummary.balance?.[userId] || 0;*/}
 
-                            return (
-                                <ListGroup.Item key={userId}>
-                                    <div className="d-flex justify-content-between align-items-center">
-                                        <strong>{getParticipantName(userId)}</strong>
-                                        <Badge bg={balanceAmount >= 0 ? "success" : "danger"}>
-                                            {balanceAmount >= 0 ? "Do zwrotu" : "Do dopłaty"}
-                                        </Badge>
-                                    </div>
-                                    <div className="small text-muted mt-1">
-                                        <div>Powinien zapłacić: <strong>{shareAmount.toFixed(2)} zł</strong></div>
-                                        <div>Rzeczywiście zapłacił: <strong>{paidAmount.toFixed(2)} zł</strong></div>
-                                        <div className={balanceAmount >= 0 ? "text-success" : "text-danger"}>
-                                            Bilans: <strong>{balanceAmount >= 0 ? '+' : ''}{balanceAmount.toFixed(2)} zł</strong>
-                                        </div>
-                                    </div>
-                                </ListGroup.Item>
-                            );
-                        })}
-                    </ListGroup>
-                </>
-            )}
+            {/*                return (*/}
 
-            <div className="mt-3 p-2 rounded small">
-                <div className="d-flex justify-content-between">
-                    <span>Całkowity koszt:</span>
-                    <span>{budgetSummary.totalTripCost?.toFixed(2) || '0.00'} zł</span>
-                </div>
-                <div className="text-muted mt-1">
-                    <div>✅ Dodatni bilans = należy się zwrot</div>
-                    <div>❌ Ujemny bilans = do dopłaty</div>
-                </div>
-            </div>
+            {/*                    <ListGroup.Item key={userId}>*/}
+            {/*                        <div className="d-flex justify-content-between align-items-center">*/}
+            {/*                            <strong>{getParticipantName(userId)}</strong>*/}
+            {/*                            <Badge bg={balanceAmount >= 0 ? "success" : "danger"}>*/}
+            {/*                                {balanceAmount >= 0 ? "Do zwrotu" : "Do dopłaty"}*/}
+            {/*                            </Badge>*/}
+            {/*                        </div>*/}
+            {/*                        <div className="small text-muted mt-1">*/}
+            {/*                            <div>Powinien zapłacić: <strong>{shareAmount.toFixed(2)} zł</strong></div>*/}
+            {/*                            <div>Rzeczywiście zapłacił: <strong>{paidAmount.toFixed(2)} zł</strong></div>*/}
+            {/*                            <div className={balanceAmount >= 0 ? "text-success" : "text-danger"}>*/}
+            {/*                                Bilans: <strong>{balanceAmount >= 0 ? '+' : ''}{balanceAmount.toFixed(2)} zł</strong>*/}
+            {/*                            </div>*/}
+            {/*                        </div>*/}
+            {/*                    </ListGroup.Item>*/}
+            {/*                );*/}
+            {/*            })}*/}
+            {/*        </ListGroup>*/}
+            {/*    </>*/}
+            {/*)}*/}
+
+            {/*<div className="mt-3 p-2 rounded small">*/}
+            {/*    <div className="d-flex justify-content-between">*/}
+            {/*        <span>Całkowity koszt:</span>*/}
+            {/*        <span>{budgetSummary.totalTripCost?.toFixed(2) || '0.00'} zł</span>*/}
+            {/*    </div>*/}
+            {/*    <div className="text-muted mt-1">*/}
+            {/*        <div>✅ Dodatni bilans = należy się zwrot</div>*/}
+            {/*        <div>❌ Ujemny bilans = do dopłaty</div>*/}
+            {/*    </div>*/}
+            {/*</div>*/}
         </>
     );
 }
