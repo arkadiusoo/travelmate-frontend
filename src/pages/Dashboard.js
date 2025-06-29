@@ -100,7 +100,9 @@ function Dashboard() {
                       size="sm"
                       className="w-100"
                       onClick={() => navigate('/raports')}
-                  ></Button>
+                  >
+                    Przejdź do raportów
+                  </Button>
                 </Card.Body>
               </Card>
             </Col>
