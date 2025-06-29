@@ -13,7 +13,7 @@ import {
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext'; // ✅ Import useAuth
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import L, { point } from 'leaflet';
 import MainLayout from '../layouts/MainLayout';
 import WideModalWrapper from "../components/WideModalWrapper";
 import ExpenseForm from "../components/budget/ExpenseForm";
@@ -53,7 +53,7 @@ function MapSetter({ setMap, setHasUserInteracted }) {
 
 export default function PlanTrip() {
   const { id: tripId } = useParams();
-  const { token } = useAuth(); // ✅ Get auth token
+  const { token, user } = useAuth(); // ✅ Get auth token
   const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
 
   // ✅ Add helper function for auth headers
@@ -88,6 +88,7 @@ export default function PlanTrip() {
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [noteContent, setNoteContent] = useState('');
   const [notePointId, setNotePointId] = useState(null);
+  const [notePointTitle, setNotePointTitle] = useState('');
 
   // State for passing point data to ExpenseForm
   const [expenseFormData, setExpenseFormData] = useState(null);
@@ -216,8 +217,9 @@ export default function PlanTrip() {
   };
 
 
-  const openNoteModal = (pointId) => {
-    setNotePointId(pointId);
+  const openNoteModal = (pt) => {
+    setNotePointId(pt.id);
+    setNotePointTitle(pt.title);
     setNoteContent('');
     setShowNoteModal(true);
   };  
@@ -479,7 +481,7 @@ export default function PlanTrip() {
       <Button variant="outline-success" size="sm" title="Oznacz jako odwiedzone" onClick={e => { e.stopPropagation(); handleMarkVisited(pt.id); }} disabled={pt.visited}>
         <BsCheckCircle /> 
       </Button>
-      <Button variant="outline-warning" size="sm" style={{ minWidth: '30px' }} onClick={() => openNoteModal(pt.id)} title="Notatki">
+      <Button variant="outline-warning" size="sm" style={{ minWidth: '30px' }} onClick={() => openNoteModal(pt)} title="Notatki">
         <BsJournalText />
       </Button>
     </div>
@@ -709,8 +711,10 @@ export default function PlanTrip() {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify({
-            author: "Szymon", //
+            author: user?.email || 'anonim', //
             content: noteContent,
+            pointId: notePointId,
+            pointName: notePointTitle,
             date: new Date().toISOString()
           })
         })

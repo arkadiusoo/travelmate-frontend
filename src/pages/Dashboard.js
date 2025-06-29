@@ -91,7 +91,26 @@ function Dashboard() {
           <Row className="mt-5">
 
             <Col md={6}>
-              <Card className="shadow-sm" >
+
+              <Card className="shadow-sm">
+                <Card.Body>
+                  <Card.Title>Raporty z wycieczek</Card.Title>
+                  <Card.Text>Wygenerowane raporty z wycieczek</Card.Text>
+                  <Button
+                      variant="info"
+                      size="sm"
+                      className="w-100"
+                      onClick={() => navigate('/raports')}
+                  >
+                    Przejdź do raportów
+                  </Button>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={6}>
+              <Card className="shadow-sm">
+
+
                 <Card.Body>
                   <Card.Title>📅 Synchronizacja z kalendarzem</Card.Title>
                   <Card.Text>Integracja z Google Calendar.</Card.Text>
