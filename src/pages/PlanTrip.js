@@ -739,6 +739,9 @@ export default function PlanTrip() {
                             />
                         </Form.Group>
                     </Form>
+                    {
+
+                    }
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={() => setShowNoteModal(false)}>Anuluj</Button>
@@ -777,12 +780,12 @@ export default function PlanTrip() {
                     <Modal.Title>Wszystkie notatki</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    Tutaj są notatki
                     {
                         notes.map((note) => (
-                            <div >
-                                <div >Miejsce : {note.pointName}</div>
-                                <div>{note.content}</div>
+                            <div style={{ border : "solid 1px grey", borderTop : "solid 2px grey", borderRadius : "7px", marginBottom : "10px"}} key={note.id}>
+                                <div style={{fontSize : "25px", padding: "5px", textAlign : "center"}}>Miejsce : {note.pointName}</div>
+                                <div style={{borderTop : "solid 1px grey", padding: "5px"}}>  Data: {note.date.substring(0,10)}</div>
+                                <div  style={{borderTop : "solid 1px grey", padding: "5px"}}>{note.content}</div>
                             </div>
                         ))
                     }
