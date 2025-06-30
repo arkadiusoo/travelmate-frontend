@@ -94,7 +94,7 @@ function Dashboard() {
 
               <Card className="shadow-sm">
                 <Card.Body>
-                  <Card.Title>Raporty z wycieczek</Card.Title>
+                  <Card.Title>🗂️ Raporty z wycieczek</Card.Title>
                   <Card.Text>Wygenerowane raporty z wycieczek</Card.Text>
                   <Button
                       variant="info"
